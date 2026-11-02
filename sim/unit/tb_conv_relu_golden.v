@@ -26,7 +26,7 @@ module tb_conv_relu_golden;
     reg v2;  reg [8*36-1:0] pix2, wf2;  reg signed [31:0] bias2;
     wire ov2; wire signed [31:0] acc2; wire [7:0] act2;
     conv_pe #(.NTAPS(36)) c2 (.clk(clk), .rst(rst), .in_valid(v2), .pix_flat(pix2), .w_flat(wf2), .bias(bias2), .out_valid(ov2), .acc(acc2));
-    relu_requant #(.IN_W(32), .SHIFT(7)) r2 (.acc(acc2), .act_out(act2));
+    relu_requant #(.IN_W(32), .SHIFT(6)) r2 (.acc(acc2), .act_out(act2));
 
     integer errors1, errors2, checks1, checks2, neg1, sat1, neg2, sat2, zero1, zero2;
     integer n, f, orr, oc, pr, pc, ch, ky, kx, t, mx;
@@ -123,7 +123,7 @@ module tb_conv_relu_golden;
               end
 
         $display("Layer 1 (conv_pe 9 taps  + ReLU S1=10): %0d pooled outputs, %0d errors | windows acc<0: %0d, saturated: %0d, pooled==0: %0d", checks1, errors1, neg1, sat1, zero1);
-        $display("Layer 2 (conv_pe 36 taps + ReLU S2=7 ): %0d pooled outputs, %0d errors | windows acc<0: %0d, saturated: %0d, pooled==0: %0d", checks2, errors2, neg2, sat2, zero2);
+        $display("Layer 2 (conv_pe 36 taps + ReLU S2=6 ): %0d pooled outputs, %0d errors | windows acc<0: %0d, saturated: %0d, pooled==0: %0d", checks2, errors2, neg2, sat2, zero2);
         if (errors1 + errors2 == 0) $display("*** TEST PASSED : tb_conv_relu_golden ***");
         else                        $display("*** TEST FAILED : tb_conv_relu_golden ***");
         $finish;
