@@ -26,10 +26,10 @@ module tb_top;
                       T_TIRE = {7'h78, 7'h04, 7'h50, 7'h79}, T_SLEP = {7'h6D, 7'h38, 7'h79, 7'h73},
                       T_LAT  = {7'h3F, 7'h3F, 7'h4F, 7'h3F};   // 3000 cycles = 30 us -> "0030"
 
-    drowsiness_top #(.CLK_MHZ(100), .DEB_CYCLES(4), .STEP_TICKS(STEP), .REFRESH_BITS(RB), .BLINK_BITS(8),
+    drowsiness_top #(.UART_ENABLE(0), .CLK_MHZ(100), .DEB_CYCLES(4), .STEP_TICKS(STEP), .REFRESH_BITS(RB), .BLINK_BITS(8),
         .STUB_LATENCY(LAT), .IMG_FILE(`MEM("images.mem")), .W_FILE(`MEM("weights.mem")),
         .B_FILE(`MEM("biases.mem")), .SEQ_FILE(`MEM("seq.mem")), .LOGIT_FILE(`MEM("stub_logits.mem")))
-    dut (.clk(clk), .sw(sw), .btnC(btnC), .btnU(btnU), .led(led), .seg(seg), .dp(dp), .an(an));
+    dut (.uart_rx(1'b1), .clk(clk), .sw(sw), .btnC(btnC), .btnU(btnU), .led(led), .seg(seg), .dp(dp), .an(an));
 
     always #5 clk = ~clk;
 

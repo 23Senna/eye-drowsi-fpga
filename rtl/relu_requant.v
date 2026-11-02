@@ -7,7 +7,7 @@
 //   - >>>  : arithmetic shift, so a negative acc stays negative and clips to 0
 //   - ReLU : negative -> 0   |   saturate : > SAT -> SAT (127 = uint7)
 // Combinational, 0 latency.
-// Layer 1 uses SHIFT = 10 (S1), layer 2 uses SHIFT = 7 (S2)  (export/params.txt)
+// Layer 1 uses SHIFT = 10 (S1), layer 2 uses SHIFT = 6 (S2)  (export/params.txt)
 //==============================================================================
 module relu_requant #(
     parameter IN_W  = 32,

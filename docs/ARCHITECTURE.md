@@ -9,7 +9,7 @@
 | act1 | `clip(acc >>> 10, 0, 127)` | 4×22×22 | ReLU + requantise (shift **S1 = 10**) |
 | pool1 | 2×2 max | 4×11×11 | |
 | conv2 | 8 filters 3×3×4 | 8×9×9 | |
-| act2 | `clip(acc >>> 7, 0, 127)` | 8×9×9 | shift **S2 = 7** |
+| act2 | `clip(acc >>> 6, 0, 127)` | 8×9×9 | shift **S2 = 6** |
 | pool2 | 2×2 max, floor | 8×4×4 | last row/col dropped (9 → 4) |
 | fc | 128 → 2, `int8` weights | 2 logits (`int32`) | flatten order `ch*16 + row*4 + col` |
 | decision | `logit1 > logit0` → **open (1)**, else **closed (0)** | | ties → closed |
@@ -28,7 +28,7 @@ Quantisation: `ml/quantize_export.py` — per-tensor symmetric int8 weights; shi
 | `images.mem` | 16 test images × 1024 bytes (576 used, rest `00`) | selected by `SW[3:0] × 1024` |
 | `expected_a1.mem`, `expected_a2.mem` | golden intermediate maps for the 16 images (4×11×11, 8×4×4) | used by unit tests |
 | `expected.txt` | golden label / prediction / both logits for the 16 images | used by `run_sim.sh` |
-| `params.txt` | `S1=10`, `S2=7` | |
+| `params.txt` | `S1=10`, `S2=6` | |
 
 The 16 demo images are chosen by `quantize_export.py`: the first two are the model's misclassified test images (so **demo images 0 and 1 are expected to be wrong**), the remaining 14 alternate closed/open.
 

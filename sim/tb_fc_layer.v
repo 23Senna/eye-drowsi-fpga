@@ -25,6 +25,8 @@ module tb_fc_layer #(
 
     integer i;
     integer errors;
+    integer fd, parsed, row_slot, row_label, row_pred;
+    reg [1023:0] header;
 
     always #5 clk = ~clk;
 
@@ -47,23 +49,19 @@ module tb_fc_layer #(
         $readmemh("fc_w.mem", weight_mem);
         $readmemh("fc_b.mem", bias_mem);
 
-        // expected.txt columns: slot label prediction logit0 logit1
-        expected_logit0[0] = 1326;   expected_logit1[0] = -363;
-        expected_logit0[1] = -632;   expected_logit1[1] = 3752;
-        expected_logit0[2] = 7202;   expected_logit1[2] = -5075;
-        expected_logit0[3] = -6948;  expected_logit1[3] = 11172;
-        expected_logit0[4] = 18436;  expected_logit1[4] = -13446;
-        expected_logit0[5] = -4666;  expected_logit1[5] = 9184;
-        expected_logit0[6] = 9806;   expected_logit1[6] = -7346;
-        expected_logit0[7] = -8355;  expected_logit1[7] = 13050;
-        expected_logit0[8] = 18753;  expected_logit1[8] = -13755;
-        expected_logit0[9] = -8922;  expected_logit1[9] = 13489;
-        expected_logit0[10] = 5870;  expected_logit1[10] = -3755;
-        expected_logit0[11] = -7031; expected_logit1[11] = 11731;
-        expected_logit0[12] = 6332;  expected_logit1[12] = -3047;
-        expected_logit0[13] = -8669; expected_logit1[13] = 13583;
-        expected_logit0[14] = 12106; expected_logit1[14] = -9431;
-        expected_logit0[15] = -11941; expected_logit1[15] = 15673;
+        // Load the current export instead of duplicating stale golden constants.
+        fd = $fopen("expected.txt", "r");
+        if (fd == 0) $fatal(1, "missing expected.txt");
+        parsed = $fgets(header, fd);
+        if (parsed == 0) $fatal(1, "missing expected.txt header");
+        for (i = 0; i < 16; i = i + 1) begin
+            parsed = $fscanf(fd, "%d %d %d %d %d\n", row_slot, row_label, row_pred,
+                              expected_logit0[i], expected_logit1[i]);
+            if (parsed != 5 || row_slot != i)
+                $fatal(1, "invalid expected.txt row %0d", i);
+        end
+        $fclose(fd);
+        if (IMAGE < 0 || IMAGE > 15) $fatal(1, "IMAGE outside 0..15");
 
         errors = 0;
         #20;
