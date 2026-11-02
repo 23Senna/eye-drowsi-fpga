@@ -37,6 +37,12 @@ Batch: `cd integration && vivado -mode batch -source scripts/create_project.tcl 
 Full guide and board test table: [docs/VIVADO_BOARD_GUIDE.md](docs/VIVADO_BOARD_GUIDE.md); Vivado simulator (6 testbenches in
 sim_1): [docs/VIVADO_SIM_GUIDE.md](docs/VIVADO_SIM_GUIDE.md).
 
+## UART control and monitoring
+
+SW9 selects board (down) or PC (up) control. UART sends results from every mode.
+See [UART protocol and demo](docs/UART.md) and [executed verification](docs/UART_VERIFICATION.md).
+Use `python integration/scripts/verify_uart.py` for the full working-tree simulation regression.
+
 ## Board controls
 
 | Control | Function |
@@ -44,6 +50,7 @@ sim_1): [docs/VIVADO_SIM_GUIDE.md](docs/VIVADO_SIM_GUIDE.md).
 | btnU | reset |
 | btnC | run one inference (manual) / next frame (sequence step mode) |
 | SW[3:0] | image slot 0–15 |
+| SW9 | board control (0) / PC SLOT and RUN (1) |
 | SW10 | sequence scan: slots 0, 1, …, 15 in order |
 | SW11 | sequence step: btnC = next frame |
 | SW12 | sequence slow: 1 frame per second |

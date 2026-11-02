@@ -64,3 +64,11 @@ set_false_path -from [get_ports {btnC btnU sw[*]}]
 ## Configuration
 set_property CONFIG_VOLTAGE 3.3 [current_design]
 set_property CFGBVS VCCO [current_design]
+
+## USB-UART bridge: directions are from the FPGA perspective.
+set_property -dict { PACKAGE_PIN B18 IOSTANDARD LVCMOS33 } [get_ports uart_rx]
+set_property -dict { PACKAGE_PIN A18 IOSTANDARD LVCMOS33 } [get_ports uart_tx]
+# Only the asynchronous path into the first synchronizer stage is exempt.
+set_false_path -from [get_ports uart_rx] -to [get_pins -hier -filter {NAME =~ */u_rx/rx_meta_reg/D}]
+# LEDs, display and UART TX are asynchronous external outputs, without a receiver clock relationship.
+set_false_path -to [get_ports {led[*] seg[*] an[*] dp uart_tx}]

@@ -26,7 +26,7 @@ Roboflow eye dataset
 ```
 
 Network: `24 × 24 u8 → Conv3×3×4 → ReLU(>>10, sat 127) → MaxPool2 →
-Conv3×3×8 → ReLU(>>7, sat 127) → MaxPool2 → FC 128→2 → argmax`.
+Conv3×3×8 → ReLU(>>6, sat 127) → MaxPool2 → FC 128→2 → argmax`.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full data layout
 and hardware details.
 
@@ -73,6 +73,12 @@ and hardware details.
 ├── integration/                # Drowsiness top level for the board (see integration/README.md)
 └── examples/digits-demo-basys3 # Separate 8 × 8 digit CNN reference demo
 ```
+
+## UART extension
+
+The integration top supports 115200 8N1 UART, SW9 board/PC ownership, SLOT/RUN commands
+and RESULT telemetry from manual and sequence modes. Images remain preloaded.
+See [UART usage](integration/docs/UART.md) and [verification record](integration/docs/UART_VERIFICATION.md).
 
 ## Quick start
 

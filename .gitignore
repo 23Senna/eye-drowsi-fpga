@@ -30,3 +30,11 @@ integration/sim/vectors/
 integration/mem/images.mem
 integration/vivado/
 integration/reports/
+
+.venv/
+
+/clockInfo.txt
+
+/dfx_runtime.txt
+
+/tight_setup_hold_pins.txt

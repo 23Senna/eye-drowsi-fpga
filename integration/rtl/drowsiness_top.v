@@ -6,6 +6,8 @@
 // CLK_MHZ = 50 puts an MMCM in front (for the old one-MAC cnn_top, conv2 path ~16.6 ns). In simulation
 // (no SYNTHESIS macro) the board clock is used directly - testbenches set CLK_MHZ = 100.
 module drowsiness_top #(
+    parameter UART_ENABLE  = 1,
+    parameter UART_BAUD    = 115200,
     parameter CLK_MHZ      = 100,         // 100 or 50
     parameter DEB_CYCLES   = CLK_MHZ * 10000,     // 10 ms debounce
     parameter STEP_TICKS   = CLK_MHZ * 100000,    // 100 ms per sequence frame
@@ -23,6 +25,8 @@ module drowsiness_top #(
     input  wire [15:0] sw,
     input  wire        btnC,
     input  wire        btnU,
+    input  wire        uart_rx,
+    output wire        uart_tx,
     output wire [15:0] led,
     output wire [6:0]  seg,
     output wire        dp,
@@ -50,7 +54,12 @@ module drowsiness_top #(
     assign locked  = 1'b1;
 `endif
 
-    wire        rst, start_pulse, low_conf_en, seq_mode, seq_slow, seq_step, seq_scan, lat_view;
+    wire        rst, start_pulse, low_conf_en, board_seq_mode, seq_slow, seq_step, seq_scan, lat_view;
+    wire pc_requested, launch_ready, serial_quiescent, uart_run_pending;
+    wire [3:0] pc_slot;
+    reg pc_mode;
+    wire mode_pending = UART_ENABLE && (pc_requested != pc_mode);
+    wire seq_mode = board_seq_mode && !pc_mode;
     wire [3:0]  slot_sw, img_slot;
     wire        cnn_start, cnn_done, cnn_eye;
     wire signed [31:0] logit0, logit1;     // FC class 0 = closed, class 1 = open
@@ -62,12 +71,14 @@ module drowsiness_top #(
     wire [15:0] latency_us;
 
     input_control #(.DEB_CYCLES(DEB_CYCLES)) u_input (
-        .clk(sys_clk), .btnC(btnC), .btnU(btnU | ~locked), .sw(sw), .rst(rst), .start_pulse(start_pulse),
+        .pc_requested(pc_requested), .clk(sys_clk), .btnC(btnC), .btnU(btnU | ~locked), .sw(sw), .rst(rst), .start_pulse(start_pulse),
         .slot(slot_sw), .seq_scan(seq_scan), .seq_step(seq_step), .seq_slow(seq_slow), .low_conf_en(low_conf_en),
-        .seq_mode(seq_mode), .lat_view(lat_view));
+        .seq_mode(board_seq_mode), .lat_view(lat_view));
 
     drowsy_fsm #(.STEP_TICKS(STEP_TICKS), .SLOW_TICKS(SLOW_TICKS), .SEQ_FILE(SEQ_FILE), .CLK_MHZ(CLK_MHZ)) u_fsm (
-        .clk(sys_clk), .rst(rst), .start_pulse(start_pulse), .slot_sw(slot_sw), .seq_mode(seq_mode),
+        .clk(sys_clk), .rst(rst), .launch_ready(launch_ready),
+        .start_pulse(pc_mode ? uart_run_pending : start_pulse),
+        .slot_sw(pc_mode ? pc_slot : slot_sw), .seq_mode(seq_mode),
         .seq_slow(seq_slow), .seq_step(seq_step), .seq_scan(seq_scan), .low_conf_en(low_conf_en),
         .cnn_start(cnn_start), .cnn_done(cnn_done), .cnn_eye(cnn_eye),
         .cnn_logit0(logit0), .cnn_logit1(logit1), .img_slot(img_slot), .busy(fsm_busy),
@@ -103,6 +114,28 @@ module drowsiness_top #(
 
     assign cnn_eye = ~prediction;          // eye_state 1 = closed
 `endif
+
+    // Ownership changes only after the active frame and serial output complete.
+    always @(posedge sys_clk) begin
+        if (rst) pc_mode <= 1'b0;
+        else if (serial_quiescent && !fsm_busy) pc_mode <= UART_ENABLE && pc_requested;
+    end
+    generate if (UART_ENABLE) begin : g_uart
+        uart_monitor #(.CLKS_PER_BIT((CLK_MHZ*1000000 + UART_BAUD/2)/UART_BAUD), .CLK_MHZ(CLK_MHZ)) u_serial (
+            .clk(sys_clk),.rst(rst),.rx(uart_rx),.tx(uart_tx),
+            .pc_mode(pc_mode),.mode_pending(mode_pending),.system_busy(fsm_busy),
+            .cnn_start(cnn_start),.sequence_mode(seq_mode),.frame_done(frame_done),
+            .image_slot(img_slot),.closed(eye_state),.warning_state(drowsy_state),
+            .logit0(logit0),.logit1(logit1),.latency(latency),
+            .pc_slot(pc_slot),.run_pending(uart_run_pending),
+            .launch_ready(launch_ready),.quiescent(serial_quiescent));
+    end else begin : g_no_uart
+        assign uart_tx=1'b1;
+        assign pc_slot=4'd0;
+        assign uart_run_pending=1'b0;
+        assign launch_ready=1'b1;
+        assign serial_quiescent=1'b1;
+    end endgenerate
 
     alert_control #(.REFRESH_BITS(REFRESH_BITS), .BLINK_BITS(BLINK_BITS)) u_alert (
         .clk(sys_clk), .rst(rst), .have_result(have_result), .eye_state(eye_state),

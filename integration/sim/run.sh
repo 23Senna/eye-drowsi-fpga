@@ -28,14 +28,22 @@ declare -A SRC=(
   [tb_top]="-DUSE_STUB $RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $RTL/image_rom.v $RTL/weight_bias_rom.v $RTL/cnn_core_stub.v"
   [tb_top_real]="$RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $TEAM_SRC"
 )
-TBS="${*:-tb_input_control tb_alert_control tb_drowsy_fsm tb_roms tb_cnn_control tb_top tb_top_real}"
+SERIAL=""; for m in uart_rx uart_tx uart_command uart_ascii_tx uart_monitor; do SERIAL="$SERIAL $RTL/$m.v"; done
+SRC[tb_top]="${SRC[tb_top]} $SERIAL"
+SRC[tb_top_real]="${SRC[tb_top_real]} $SERIAL"
+SRC[tb_uart_phy]="$RTL/uart_rx.v $RTL/uart_tx.v"
+SRC[tb_uart_command]="$RTL/uart_command.v"
+SRC[tb_uart_format]="$SERIAL"
+SRC[tb_uart_latency]="$SERIAL"
+SRC[tb_uart_system]="${SRC[tb_top_real]}"
+TBS="${*:-tb_input_control tb_alert_control tb_drowsy_fsm tb_roms tb_cnn_control tb_top tb_top_real tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system}"
 
 fail=0
 for tb in $TBS; do
   [ -f "$tb.v" ] || { echo "SKIP $tb (no $tb.v)"; continue; }
   opts=""; files=""
   for w in ${SRC[$tb]}; do case "$w" in -*) opts="$opts $w" ;; *) files="$files $w" ;; esac; done
-  if ! "$IV/iverilog" -g2012 -Wall -I"$RTL" -I. $opts -o "build/$tb.vvp" "$tb.v" $files 2> "build/$tb.compile.log"; then
+  if ! "$IV/iverilog" -g2012 -Wall -s "$tb" -I"$RTL" -I. $opts -o "build/$tb.vvp" "$tb.v" $files 2> "build/$tb.compile.log"; then
     echo "FAIL $tb (compile, see sim/build/$tb.compile.log)"; fail=1; continue
   fi
   grep -v "timescale" "build/$tb.compile.log" | grep -i -E "warning|error" | head -3

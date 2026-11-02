@@ -16,7 +16,7 @@ foreach f {drowsy_trace seq_expected expected_a1 expected_a2} {
     }
 }
 set tbs {}
-foreach t {tb_top_real tb_drowsy_fsm tb_input_control tb_alert_control tb_roms tb_cnn_control} {
+foreach t {tb_top_real tb_drowsy_fsm tb_input_control tb_alert_control tb_roms tb_cnn_control tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system} {
     lappend tbs [file join $sim $t.v]
 }
 set extra_rtl {}
@@ -28,6 +28,9 @@ foreach f {drowsy_trace seq_expected expected_a1 expected_a2} { lappend data [fi
 set fs [get_filesets sim_1]
 foreach f [get_files -quiet -of_objects $fs] { remove_files -quiet -fileset sim_1 $f }
 add_files -fileset sim_1 -norecurse $tbs
+foreach t {tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system} {
+    set_property file_type SystemVerilog [get_files [file join $sim $t.v]]
+}
 add_files -fileset sim_1 -norecurse $extra_rtl
 add_files -fileset sim_1 -norecurse [list [file join $sim tb_paths.vh] [file join $fpga rtl model_params.vh]]
 add_files -fileset sim_1 -norecurse $data

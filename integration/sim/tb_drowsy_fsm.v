@@ -21,7 +21,7 @@ module tb_drowsy_fsm;
     integer errors = 0, i, delay, starts = 0, last_start = 0, n0;
 
     drowsy_fsm #(.STEP_TICKS(STEP), .SLOW_TICKS(SLOW), .SEQ_LEN(SEQ_LEN), .SEQ_FILE(`MEM("seq.mem"))) dut (
-        .clk(clk), .rst(rst), .start_pulse(start_pulse), .slot_sw(slot_sw), .seq_mode(seq_mode), .seq_slow(seq_slow), .seq_step(seq_step), .seq_scan(seq_scan),
+        .launch_ready(1'b1), .clk(clk), .rst(rst), .start_pulse(start_pulse), .slot_sw(slot_sw), .seq_mode(seq_mode), .seq_slow(seq_slow), .seq_step(seq_step), .seq_scan(seq_scan),
         .low_conf_en(low_conf_en), .cnn_start(cnn_start), .cnn_done(cnn_done), .cnn_eye(cnn_eye),
         .cnn_logit0(logit0), .cnn_logit1(logit1), .img_slot(img_slot), .busy(busy),
         .frame_done(frame_done), .have_result(have_result), .eye_state(eye_state),

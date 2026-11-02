@@ -23,9 +23,9 @@ module tb_top_real;
     localparam [27:0] T_OPEN = {7'h3F, 7'h73, 7'h79, 7'h54}, T_CLSD = {7'h39, 7'h38, 7'h6D, 7'h5E},
                       T_TIRE = {7'h78, 7'h04, 7'h50, 7'h79}, T_SLEP = {7'h6D, 7'h38, 7'h79, 7'h73};
 
-    drowsiness_top #(.CLK_MHZ(100), .DEB_CYCLES(4), .STEP_TICKS(STEP), .REFRESH_BITS(RB), .BLINK_BITS(8),
+    drowsiness_top #(.UART_ENABLE(0), .CLK_MHZ(100), .DEB_CYCLES(4), .STEP_TICKS(STEP), .REFRESH_BITS(RB), .BLINK_BITS(8),
         .SEQ_FILE(`MEM("seq.mem")))
-    dut (.clk(clk), .sw(sw), .btnC(btnC), .btnU(btnU), .led(led), .seg(seg), .dp(dp), .an(an));
+    dut (.uart_rx(1'b1), .clk(clk), .sw(sw), .btnC(btnC), .btnU(btnU), .led(led), .seg(seg), .dp(dp), .an(an));
 
     always #5 clk = ~clk;
 

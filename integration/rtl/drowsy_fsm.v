@@ -23,6 +23,7 @@ module drowsy_fsm #(
     input  wire        rst,
     // from input_control
     input  wire        start_pulse,
+    input  wire        launch_ready, // reserve one telemetry result before starting
     input  wire [3:0]  slot_sw,
     input  wire        seq_mode,
     input  wire        seq_slow,
@@ -110,7 +111,7 @@ module drowsy_fsm #(
             seq_mode_d <= seq_mode;
             frame_done <= 1'b0;
             case (state)
-                S_IDLE:   if (go) begin
+                S_IDLE:   if (go && launch_ready && !mode_change) begin
                               img_slot <= !seq_mode ? slot_sw : seq_scan ? scan_ptr : seq_mem[seq_ptr];
                               state    <= S_START;
                           end
@@ -143,7 +144,7 @@ module drowsy_fsm #(
             tick_cnt <= (!seq_mode || seq_step || tick) ? 32'd0 : tick_cnt + 32'd1;
             seq_scan_d <= seq_scan;
             if (seq_scan && !seq_scan_d) scan_ptr <= 4'd0;      // scan restarts at slot 0
-            if (state == S_IDLE && go) begin
+            if (state == S_IDLE && go && launch_ready && !mode_change) begin
                 pending <= 1'b0;
                 if (seq_mode && seq_scan)  scan_ptr <= scan_ptr + 4'd1;          // wraps 15 -> 0
                 if (seq_mode && !seq_scan) seq_ptr  <= (seq_ptr == SEQ_LEN - 1) ? 8'd0 : seq_ptr + 8'd1;
