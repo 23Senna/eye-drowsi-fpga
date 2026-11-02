@@ -11,6 +11,12 @@ add_files -norecurse [list \
   $root/rtl/basys3_wrapper.v \
   $root/rtl/cnn_top.v \
   $root/rtl/rom_weights.v \
+  $root/rtl/conv1_layer.v \
+  $root/rtl/conv2_layer.v \
+  $root/rtl/fc_layer.v \
+  $root/rtl/mac_pipe.v \
+  $root/rtl/relu_requant.v \
+  $root/rtl/maxpool2x2.v \
   $root/rtl/seven_seg_drive.v ]
 # rom_weights.v loads these with $readmemh("<name>.mem"): they must be part of the project
 add_files -norecurse [glob $root/ml/export/*.mem]

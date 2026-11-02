@@ -68,7 +68,7 @@ module cnn_top (
 
     // ---------------- Layer 1
     wire [9:0] l1_img_addr;
-    wire [7:0] l1_img_data = img_mem[l1_img_addr];
+    reg  [7:0] l1_img_data;     // sync read: data 1 clock after the address (layer contract)
     wire       a1_we;
     wire [8:0] a1_waddr;
     wire [7:0] a1_wdata;
@@ -83,7 +83,7 @@ module cnn_top (
 
     // ---------------- Layer 2
     wire [8:0] l2_a1_addr;
-    wire [7:0] l2_a1_data = a1_mem[l2_a1_addr];
+    reg  [7:0] l2_a1_data;      // sync read
     wire       a2_we;
     wire [6:0] a2_waddr;
     wire [7:0] a2_wdata;
@@ -98,7 +98,7 @@ module cnn_top (
 
     // ---------------- FC
     wire [6:0] fc_a2_addr;
-    wire [7:0] fc_a2_data = a2_mem[fc_a2_addr];
+    reg  [7:0] fc_a2_data;      // sync read
 
     fc_layer u_fc (
         .clk(clk), .rst(rst), .start(fc_start), .done(fc_done),
@@ -107,6 +107,14 @@ module cnn_top (
         .b_addr(fc_b_addr), .b_data(fc_b_data),
         .logit0(logit0), .logit1(logit1)
     );
+
+    // ---------------- Buffer reads (synchronous, like rom_weights: the layers'
+    // pipelines expect img/a1/a2 data one clock after the address, together with w_data)
+    always @(posedge clk) begin
+        l1_img_data <= img_mem[l1_img_addr];
+        l2_a1_data  <= a1_mem[l2_a1_addr];
+        fc_a2_data  <= a2_mem[fc_a2_addr];
+    end
 
     // ---------------- Buffer writes
     always @(posedge clk) begin

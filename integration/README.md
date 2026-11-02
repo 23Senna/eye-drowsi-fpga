@@ -2,12 +2,12 @@
 
 Board top level around the CNN core of this repo (`rtl/cnn_top.v` + `rtl/rom_weights.v`, used as is, not copied):
 buttons/switches, the drowsiness state machine (PERCLOS window, DROWSY / MICROSLEEP alarms), 7-segment and LED
-output, a 50 MHz system clock (MMCM), simulation and Vivado scripts.
+output, 100 MHz system clock (optional 50 MHz MMCM), simulation and Vivado scripts.
 
 ```text
 integration/
 ├── rtl/
-│   ├── drowsiness_top.v    # FPGA top: MMCM 100 -> 50 MHz, input_control, drowsy_fsm, cnn_top, alert_control
+│   ├── drowsiness_top.v    # FPGA top: 100 MHz (CLK_MHZ), input_control, drowsy_fsm, cnn_top, alert_control
 │   ├── input_control.v     # btnU reset sync, btnC debounce + one-pulse, switch sync / debounce
 │   ├── drowsy_fsm.v        # IDLE -> START_CNN -> WAIT_DONE -> UPDATE -> SHOW; drowsiness rules; sequence modes
 │   ├── alert_control.v     # 7-segment OPEn / CLSd / tirE / SLEP / ---- / latency, LED patterns
@@ -53,8 +53,7 @@ sim_1): [docs/VIVADO_SIM_GUIDE.md](docs/VIVADO_SIM_GUIDE.md).
 
 ## Results (Vivado 2025.2.1, xc7a35tcpg236-1)
 
-- `cnn_top` latency 75,826 cycles = 1.52 ms at 50 MHz.
-- At 100 MHz `cnn_top` misses timing (WNS −6.58 ns; path `kr2` → `a1_idx` → `a1_mem` read → multiply → `acc2`,
-  23 logic levels), so the system clock is 50 MHz: all constraints met (WNS ≈ +0.5–1.0 ns, WHS +0.12 ns).
-  Registering the `a1_mem` / `img_mem` read in `cnn_top` should allow `CLK_MHZ = 100` in `drowsiness_top.v`.
-- ~5.2k LUT, ~10.1k FF, 5 BRAM, 0 DSP.
+- Pipelined `cnn_top` (conv1/conv2/fc layers with `mac_pipe`): latency 37,290 cycles = 373 us at 100 MHz.
+- 100 MHz, no MMCM (`CLK_MHZ = 100`): all constraints met (WNS +2.41 ns, WHS +0.06 ns).
+- 600 LUT, 703 FF, 6.5 BRAM, 3 DSP (img / a1 / a2 buffers are read synchronously -> block RAM).
+- The older one-MAC `cnn_top` needed 50 MHz (`CLK_MHZ = 50` puts an MMCM in front).
