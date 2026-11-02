@@ -70,6 +70,7 @@ and hardware details.
 │   ├── STATUS_AND_ISSUES.md
 │   ├── reports/
 │   └── team/
+├── integration/                # Drowsiness top level for the board (see integration/README.md)
 └── examples/digits-demo-basys3 # Separate 8 × 8 digit CNN reference demo
 ```
 
