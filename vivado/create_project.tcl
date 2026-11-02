@@ -23,7 +23,11 @@ add_files -norecurse [glob $root/ml/export/*.mem]
 set_property file_type {Memory File} [get_files -of_objects [get_filesets sources_1] *.mem]
 
 add_files -fileset constrs_1 -norecurse $root/constraints/basys3.xdc
-add_files -fileset sim_1 -norecurse $root/sim/tb_cnn.v
+add_files -fileset sim_1 -norecurse [list \
+  $root/sim/tb_cnn.v \
+  $root/sim/tb_conv1_layer.v \
+  $root/sim/tb_conv2_layer.v \
+  $root/sim/tb_fc_layer.v ]
 
 set_property top basys3_wrapper [get_filesets sources_1]
 set_property top tb_cnn         [get_filesets sim_1]

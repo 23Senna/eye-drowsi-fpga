@@ -142,6 +142,65 @@ cnn_top.v
 rom_weights.v
 ```
 
+#### Layer-level simulations and waveforms
+
+The repository also contains self-checking testbenches for each pipelined
+layer:
+
+| Testbench | Golden data checked |
+|---|---|
+| `sim/tb_conv1_layer.v` | `expected_a1.mem`, 484 pooled values |
+| `sim/tb_conv2_layer.v` | `expected_a2.mem`, 128 pooled values |
+| `sim/tb_fc_layer.v` | logits in `expected.txt` |
+
+The testbenches use synchronous input memories, matching the one-clock
+latency contract of `rom_weights.v` and the layer comments. They also write a
+VCD waveform file. With Icarus on Windows, run from the repository root:
+
+```powershell
+New-Item -ItemType Directory -Force build | Out-Null
+iverilog -g2005 -Wall -o build\tb_conv1_layer.vvp `
+  rtl\conv1_layer.v rtl\mac_pipe.v rtl\relu_requant.v rtl\maxpool2x2.v `
+  sim\tb_conv1_layer.v
+Push-Location ml\export
+vvp ..\..\build\tb_conv1_layer.vvp
+Pop-Location
+```
+
+Repeat with `tb_conv2_layer.v` and `tb_fc_layer.v`:
+
+```powershell
+iverilog -g2005 -Wall -o build\tb_conv2_layer.vvp `
+  rtl\conv2_layer.v rtl\mac_pipe.v rtl\relu_requant.v rtl\maxpool2x2.v `
+  sim\tb_conv2_layer.v
+Push-Location ml\export
+vvp ..\..\build\tb_conv2_layer.vvp
+Pop-Location
+
+iverilog -g2005 -Wall -o build\tb_fc_layer.vvp `
+  rtl\fc_layer.v rtl\mac_pipe.v sim\tb_fc_layer.v
+Push-Location ml\export
+vvp ..\..\build\tb_fc_layer.vvp
+Pop-Location
+```
+
+The default test is image/slot `0`. Test another slot by overriding the
+testbench parameter at compile time, for example:
+
+```powershell
+iverilog -g2005 -Ptb_conv1_layer.IMAGE=3 -o build\tb_conv1_image3.vvp `
+  rtl\conv1_layer.v rtl\mac_pipe.v rtl\relu_requant.v rtl\maxpool2x2.v `
+  sim\tb_conv1_layer.v
+```
+
+Open the generated `tb_conv1_layer.vcd`, `tb_conv2_layer.vcd`, or
+`tb_fc_layer.vcd` in GTKWave (`gtkwave <file>.vcd`). In Vivado, add the same
+testbench files to `sim_1`, set one of them as the simulation top, click
+**Run Simulation -> Run Behavioral Simulation**, then add signals from the
+Objects window to the Wave window and run. Useful signals are `clk`, `rst`,
+`start`, `done`, the memory addresses/data, write enables, output
+addresses/data, and (for FC) `logit0`/`logit1`.
+
 If the Vivado Sources panel shows `examples/digits-demo-basys3` or
 `tb_cnn_core`, close that project and create a clean one using
 `vivado/create_project.tcl`. For an existing project, the equivalent Tcl
