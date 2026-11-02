@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //==============================================================================
 // conv2_layer (pipelined, 100 MHz target)
-//   4x11x11 -> conv3x3 x8 filters (4 in-ch) -> +bias -> ReLU/requant(>>7)
+//   4x11x11 -> conv3x3 x8 filters (4 in-ch) -> +bias -> ReLU/requant(>>6, = S2)
 //   -> maxpool2x2 -> 8x4x4 uint7, written in index order 0..127
 //
 // Same pipeline as conv1_layer; memories/ROM are read synchronously
@@ -104,7 +104,7 @@ module conv2_layer (
 
     // ---------------- ReLU + requant (cycle 5 -> 6)
     wire [7:0] act;
-    relu_requant #(.IN_W(32), .SHIFT(7), .OUT_W(8), .SAT(127)) u_act (
+    relu_requant #(.IN_W(32), .SHIFT(6), .OUT_W(8), .SAT(127)) u_act (   // SHIFT = S2 in ml/export/params.txt
         .acc(acc), .act_out(act)
     );
 

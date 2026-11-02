@@ -83,14 +83,14 @@ LD14 = DROWSY, LD15 = MICROSLEEP (blinks).
 | Step | Do | Expect |
 |---|---|---|
 | 1 | after programming, all switches down, press btnU | `----`, LEDs off |
-| 2 | SW[3:0] = 0000, press btnC | `CLSd` (slot 0 is an **open** eye the model gets wrong), LD5 on |
-| 3 | SW[3:0] = 0001, press btnC | `OPEn` (slot 1 is a **closed** eye the model gets wrong) |
+| 2 | SW[3:0] = 0000, press btnC | `OPEn` (slot 0 is a **closed** eye the model gets wrong) |
+| 3 | SW[3:0] = 0001, press btnC | `CLSd` (slot 1 is an **open** eye the model gets wrong), LD5 on |
 | 4 | slots 2–15 (SW = 0010 … 1111), btnC each | even slot → `CLSd`, odd slot → `OPEn` (all correct) |
-| 5 | SW15 up | `1516` = latency in µs (75,826 cycles at 50 MHz); SW15 down again |
+| 5 | SW15 up | `0372` = latency in µs (37,290 cycles at 100 MHz); SW15 down again |
 | 6 | SW14 up (sequence mode, dot on the right digit) | frames every 100 ms from `seq.mem`: ~3.5 s `OPEn`/`CLSd` with the PERCLOS bar growing → `tirE` (LD14) → `SLEP` with LD15 blinking → back to `tirE`, then the 6.4 s script repeats |
 | 6b | SW14 up **+ SW12 up** (slow, best for watching / filming) | same script at **1 frame per second**: ~35 s `OPEn`/`CLSd` (blinks at frames 6 and 13), PERCLOS bar grows → `tirE` at ~36 s → `SLEP` + LD15 blinking at ~47 s → `tirE` at ~60 s → repeats every 64 s |
 | 6c | SW14 up **+ SW11 up** (step) | nothing moves until you press **btnC**: one frame per press, LD0–3 show the slot of that frame → `tirE` after press 36, `SLEP` after press 47. Best for explaining frame by frame |
-| 6d | SW14 up **+ SW10 up** (scan; add SW12 for 1 s or SW11 for btnC steps) | slots in order 0, 1, 2 … 15, 0 … (LD0–3 count up). Display always shows the eye result, so each frame must equal the manual result of that slot: 0 `CLSd`, 1 `OPEn`, then even `CLSd` / odd `OPEn`. DROWSY/MICROSLEEP only on LD14/LD15 |
+| 6d | SW14 up **+ SW10 up** (scan; add SW12 for 1 s or SW11 for btnC steps) | slots in order 0, 1, 2 … 15, 0 … (LD0–3 count up). Display always shows the eye result, so each frame must equal the manual result of that slot: 0 `OPEn`, 1 `CLSd`, then even `CLSd` / odd `OPEn`. DROWSY/MICROSLEEP only on LD14/LD15 |
 | 7 | SW14 down | back to `----`, manual mode |
 
 Normal sequence mode (SW10 down) follows the script in `integration/mem/seq.mem` (only the correctly classified
