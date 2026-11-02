@@ -12,6 +12,7 @@ RTL=../rtl
 # CNN team's RTL (cnn_top.v, rom_weights.v): <repo>/rtl when this folder is <repo>/integration
 if [ -f ../../rtl/cnn_top.v ]; then TEAM_DEF=../../rtl; else TEAM_DEF=../../eye-drowsi-fpga/rtl; fi
 TEAM="${TEAM_RTL:-$TEAM_DEF}"
+TEAM_SRC=""; for m in cnn_top rom_weights conv1_layer conv2_layer fc_layer mac_pipe relu_requant maxpool2x2; do TEAM_SRC="$TEAM_SRC $TEAM/$m.v"; done
 mkdir -p build
 
 # generated files missing (fresh clone) -> generate them first
@@ -25,7 +26,7 @@ declare -A SRC=(
   [tb_roms]="$RTL/image_rom.v $RTL/weight_bias_rom.v"
   [tb_cnn_control]="$RTL/cnn_control.v"
   [tb_top]="-DUSE_STUB $RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $RTL/image_rom.v $RTL/weight_bias_rom.v $RTL/cnn_core_stub.v"
-  [tb_top_real]="$RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $TEAM/cnn_top.v $TEAM/rom_weights.v"
+  [tb_top_real]="$RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $TEAM_SRC"
 )
 TBS="${*:-tb_input_control tb_alert_control tb_drowsy_fsm tb_roms tb_cnn_control tb_top tb_top_real}"
 

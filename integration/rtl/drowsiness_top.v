@@ -2,11 +2,11 @@
 // CNN core = the CNN team's cnn_top (eye-drowsi-fpga/rtl/cnn_top.v + rom_weights.v, own image/weight ROMs,
 // image chosen by img_base_addr = slot * 1024, prediction 1 = open). Define USE_STUB to build with
 // cnn_core_stub (golden logits, fixed latency) plus the integration ROMs instead.
-// Clock: the 100 MHz board clock feeds an MMCM that makes the system clock CLK_MHZ (default 50 MHz,
-// because cnn_top's conv2 MAC path needs ~16.6 ns). CLK_MHZ = 100 bypasses the MMCM. In simulation
+// Clock: CLK_MHZ = 100 (default) uses the 100 MHz board clock directly (pipelined cnn_top meets 100 MHz);
+// CLK_MHZ = 50 puts an MMCM in front (for the old one-MAC cnn_top, conv2 path ~16.6 ns). In simulation
 // (no SYNTHESIS macro) the board clock is used directly - testbenches set CLK_MHZ = 100.
 module drowsiness_top #(
-    parameter CLK_MHZ      = 50,          // 50 or 100
+    parameter CLK_MHZ      = 100,         // 100 or 50
     parameter DEB_CYCLES   = CLK_MHZ * 10000,     // 10 ms debounce
     parameter STEP_TICKS   = CLK_MHZ * 100000,    // 100 ms per sequence frame
     parameter SLOW_TICKS   = CLK_MHZ * 1000000,   // 1 s per frame with SW12 (demo)
