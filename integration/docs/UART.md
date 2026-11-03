@@ -1,6 +1,6 @@
 # UART control and monitoring
 
-The board accepts selection/run commands and streams CNN results over the onboard USB-UART bridge. Existing images and weights remain in FPGA memory. There is no image upload or camera input in this revision.
+The board accepts selection/run commands and streams CNN results over the onboard USB-UART bridge. The real build also accepts 576-byte image uploads with CRC; see [image input](IMAGE_UPLOAD.md) for the binary protocol and CLI. Weights remain in FPGA ROM. Camera capture/eye localization are not implemented on the FPGA.
 
 ## Connection and controls
 

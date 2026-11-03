@@ -8,6 +8,7 @@ module uart_ascii_tx #(parameter CLKS_PER_BIT = 868)(
     input wire [1:0] warning_state,
     input wire signed [31:0] logit0, logit1,
     input wire [31:0] cycles, microseconds,
+    input wire [15:0] frame_id,
     output wire ready, output reg done, output wire tx
 );
     localparam IDLE=0, FIELD=1, TEXT=2, CONVERT=3, DIGITS=4, SEND=5, DRAIN=6;
@@ -16,6 +17,7 @@ module uart_ascii_tx #(parameter CLKS_PER_BIT = 868)(
     reg [1:0] source_q, warning_q;
     reg closed_q;
     reg [31:0] l0_q, l1_q, cycles_q, us_q;
+    reg [15:0] frame_id_q;
     reg [4:0] field;
     reg [7:0] length, send_index;
     reg [7:0] buffer [0:159];
@@ -56,7 +58,8 @@ module uart_ascii_tx #(parameter CLKS_PER_BIT = 868)(
                     case (source_q)
                         0: begin field_text="BOARD"; field_length=5; end
                         1: begin field_text="PC"; field_length=2; end
-                        default: begin field_text="SEQ"; field_length=3; end
+                        2: begin field_text="SEQ"; field_length=3; end
+                        default: begin field_text="UPLOAD"; field_length=6; end
                     endcase
                 end
                 2: begin field_type=0; field_text=" slot="; field_length=6; end
@@ -84,13 +87,30 @@ module uart_ascii_tx #(parameter CLKS_PER_BIT = 868)(
                 13: begin field_type=1; field_number=cycles_q; end
                 14: begin field_type=0; field_text=" us="; field_length=4; end
                 15: begin field_type=1; field_number=us_q; end
-                16: begin field_type=0; field_text=16'h0d0a; field_length=2; end
+                16: begin
+                    field_type=0;
+                    if (source_q==3) begin field_text=" frame_id="; field_length=10; end
+                    else begin field_text=16'h0d0a; field_length=2; end
+                end
+                17: if (source_q==3) begin field_type=1; field_number={16'd0,frame_id_q}; end
+                18: if (source_q==3) begin field_type=0; field_text=16'h0d0a; field_length=2; end
                 default: ;
             endcase
         end else if (msg_q == 1) begin
             case (field)
                 0: begin field_type=0; field_text="OK SLOT "; field_length=8; end
                 1: begin field_type=1; field_number={28'd0,slot_q}; end
+                2: begin field_type=0; field_text=16'h0d0a; field_length=2; end
+                default: ;
+            endcase
+        end else if (msg_q == 10 || msg_q == 11) begin
+            case (field)
+                0: begin
+                    field_type=0;
+                    if (msg_q==10) begin field_text="READY "; field_length=6; end
+                    else begin field_text="OK FRAME "; field_length=9; end
+                end
+                1: begin field_type=1; field_number={16'd0,frame_id_q}; end
                 2: begin field_type=0; field_text=16'h0d0a; field_length=2; end
                 default: ;
             endcase
@@ -104,6 +124,10 @@ module uart_ascii_tx #(parameter CLKS_PER_BIT = 868)(
                 6: begin field_text={"ERR RANGE",16'h0d0a}; field_length=11; end
                 7: begin field_text={"ERR OVERFLOW",16'h0d0a}; field_length=14; end
                 8: begin field_text={"ERR FRAME",16'h0d0a}; field_length=11; end
+                12: begin field_text={"ERR CRC",16'h0d0a}; field_length=9; end
+                13: begin field_text={"ERR TIMEOUT",16'h0d0a}; field_length=13; end
+                14: begin field_text={"ERR NOFRAME",16'h0d0a}; field_length=13; end
+                15: begin field_text={"ERR ID",16'h0d0a}; field_length=8; end
                 default: begin field_text={"ERR OVERRUN",16'h0d0a}; field_length=13; end
             endcase
         end
@@ -117,6 +141,7 @@ module uart_ascii_tx #(parameter CLKS_PER_BIT = 868)(
                     msg_q<=message; slot_q<=slot; source_q<=source; closed_q<=closed;
                     warning_q<=warning_state; l0_q<=logit0; l1_q<=logit1;
                     cycles_q<=cycles; us_q<=microseconds;
+                    frame_id_q<=frame_id;
                     length<=0; field<=0; state<=FIELD;
                 end
                 FIELD: case (field_type)

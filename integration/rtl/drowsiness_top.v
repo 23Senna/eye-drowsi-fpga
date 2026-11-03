@@ -9,6 +9,8 @@ module drowsiness_top #(
     parameter UART_ENABLE  = 1,
     parameter UART_BAUD    = 115200,
     parameter CLK_MHZ      = 100,         // 100 or 50
+    parameter UPLOAD_TIMEOUT = CLK_MHZ*1000000,
+    parameter UPLOAD_DRAIN = CLK_MHZ*100000,
     parameter DEB_CYCLES   = CLK_MHZ * 10000,     // 10 ms debounce
     parameter STEP_TICKS   = CLK_MHZ * 100000,    // 100 ms per sequence frame
     parameter SLOW_TICKS   = CLK_MHZ * 1000000,   // 1 s per frame with SW12 (demo)
@@ -57,6 +59,9 @@ module drowsiness_top #(
     wire        rst, start_pulse, low_conf_en, board_seq_mode, seq_slow, seq_step, seq_scan, lat_view;
     wire pc_requested, launch_ready, serial_quiescent, uart_run_pending;
     wire [3:0] pc_slot;
+    wire external_image;
+    wire [9:0] image_read_addr;
+    wire [7:0] image_read_data;
     reg pc_mode;
     wire mode_pending = UART_ENABLE && (pc_requested != pc_mode);
     wire seq_mode = board_seq_mode && !pc_mode;
@@ -87,6 +92,8 @@ module drowsiness_top #(
         .open_run(open_run), .perclos(perclos), .latency(latency), .latency_us(latency_us));
 
 `ifdef USE_STUB
+    localparam UPLOAD_SUPPORTED=0;
+    assign image_read_addr=10'd0;
     wire [13:0] core_img_addr;
     wire [7:0]  img_data, w_data;
     wire [11:0] w_addr;
@@ -106,9 +113,11 @@ module drowsiness_top #(
     weight_bias_rom #(.W_FILE(W_FILE), .B_FILE(B_FILE)) u_wb (
         .clk(sys_clk), .w_addr(w_addr), .w_data(w_data), .b_addr(b_addr), .b_data(b_data));
 `else
+    localparam UPLOAD_SUPPORTED=1;
     wire prediction;                       // cnn_top: 1 = open, 0 = closed (tie -> closed)
 
-    cnn_top u_core (
+    cnn_top #(.EXTERNAL_INPUT(1)) u_core (
+        .external_image(pc_mode && external_image),.external_addr(image_read_addr),.external_data(image_read_data),
         .clk(sys_clk), .rst(rst), .start(cnn_start), .img_base_addr({img_slot, 10'b0}),
         .done(cnn_done), .prediction(prediction), .logit0(logit0), .logit1(logit1));
 
@@ -121,17 +130,21 @@ module drowsiness_top #(
         else if (serial_quiescent && !fsm_busy) pc_mode <= UART_ENABLE && pc_requested;
     end
     generate if (UART_ENABLE) begin : g_uart
-        uart_monitor #(.CLKS_PER_BIT((CLK_MHZ*1000000 + UART_BAUD/2)/UART_BAUD), .CLK_MHZ(CLK_MHZ)) u_serial (
+        uart_monitor #(.CLKS_PER_BIT((CLK_MHZ*1000000 + UART_BAUD/2)/UART_BAUD), .CLK_MHZ(CLK_MHZ),
+            .UPLOAD_TIMEOUT(UPLOAD_TIMEOUT),.UPLOAD_DRAIN(UPLOAD_DRAIN),.UPLOAD_ENABLE(UPLOAD_SUPPORTED)) u_serial (
             .clk(sys_clk),.rst(rst),.rx(uart_rx),.tx(uart_tx),
             .pc_mode(pc_mode),.mode_pending(mode_pending),.system_busy(fsm_busy),
             .cnn_start(cnn_start),.sequence_mode(seq_mode),.frame_done(frame_done),
             .image_slot(img_slot),.closed(eye_state),.warning_state(drowsy_state),
             .logit0(logit0),.logit1(logit1),.latency(latency),
             .pc_slot(pc_slot),.run_pending(uart_run_pending),
+            .external_image(external_image),.image_read_addr(image_read_addr),.image_read_data(image_read_data),
             .launch_ready(launch_ready),.quiescent(serial_quiescent));
     end else begin : g_no_uart
         assign uart_tx=1'b1;
         assign pc_slot=4'd0;
+        assign external_image=1'b0;
+        assign image_read_data=8'd0;
         assign uart_run_pending=1'b0;
         assign launch_ready=1'b1;
         assign serial_quiescent=1'b1;

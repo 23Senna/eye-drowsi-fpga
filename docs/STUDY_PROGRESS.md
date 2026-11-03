@@ -1,5 +1,33 @@
 # Development Progress
 
+## 2026-11-03: Physical upload fault checks and recovery
+
+Inspected the three operator-run COM6 checker logs and summaries: CRC corruption (ID 100) returns ERR CRC; partial transfer (ID 200, 64/576 pixels) returns ERR TIMEOUT; operator-held btnU reset aborts partial ID 300. All three reject RUN_FRAME with ERR NOFRAME and report no RESULT during the checked quiet interval. Fresh uploads 101/201/301 then match OPEN golden logits -17106/17976 and 37290 cycles / 372 us. All three checker summaries are PASS. Evidence: build/physical_upload_crc_20261103_144833_159064/, build/physical_upload_timeout_20261103_144913_782654/, build/physical_upload_reset_20261103_144946_468206/; consolidated index: build/hardware_uart_upload_faults/summary.json. Reset timing is operator-attested; no internal cnn_start probe or independent bitstream readback was performed.
+
+## 2026-11-03: Operator uploaded OPEN recovery
+
+Validated the attached COM6 capture: all 32 OPEN uploads (frame IDs 12-43), acknowledgements, logits -24956/25692, and 37290 cycles / 372 us match. DrowsyRef continuing from the prior eight CLOSED observations matches every warning: MICROSLEEP through ID 20, DROWSY at ID 21, AWAKE at ID 37. No ERR line is present. Together, supplied CLOSED/recovery captures cover 40 consecutive observations with zero numerical/temporal mismatches. Raw attachment and summary: build/hardware_uart_upload_recovery/. This is operator-provided evidence of frame-count behavior; timing cadence and bitstream identity are not independently measured.
+
+## 2026-11-03: Operator uploaded CLOSED sequence
+
+Eight user-supplied COM6 upload records (frame IDs 4-11) all match CLOSED golden logits 8884/-9142 and 37290 cycles / 372 us. With the instructed reset as the reference initial state, DrowsyRef matches all warnings: seven AWAKE observations followed by MICROSLEEP on the eighth. Evidence: build/hardware_uart_upload_closed_sequence/. This validates observation-count behavior in the supplied capture; sampling cadence and elapsed closure duration were not measured. Recovery remains pending.
+
+## 2026-11-03: Operator uploads of non-ROM images
+
+User-supplied COM6 records for eye_closed.png (frame_id=2) and eye_open.png (frame_id=3) match their independent integer references exactly: CLOSED 8884/-9142 and OPEN -24956/25692. Both report source=UPLOAD, AWAKE, 37290 cycles / 372 us. Both pixel arrays were checked absent from the 16 stored ROM images. Evidence: build/hardware_uart_upload_new_images/serial.log and summary.json; image provenance/goldens: build/uart_upload_demo/expected.json. This demonstrates operator-observed external-image inference for these two crops; it does not establish continuous-camera accuracy, sampling cadence, electrical robustness, or independently identify the programmed bitstream.
+
+## 2026-11-03: First operator image-upload observation
+
+User-supplied COM6 output shows LOAD/CRC acknowledgement and one source=UPLOAD result for frame_id=1, using host export slot 3. Class OPEN and logits -17106/17976 match the committed golden; latency is 37290 cycles / 372 us. Capture retained in build/hardware_uart_upload_first/. This is operator-provided evidence; the excerpt alone does not independently identify the programmed bitstream. Prepared two test-set PNG eye crops absent from all 16 ROM images in build/uart_upload_demo/ with integer golden logits; their physical upload checks remain pending.
+
+## 2026-11-03: UART image upload implementation
+
+- Implemented CRC-checked 576-byte binary image reception, synchronous staging RAM, explicit frame-ID run, source latching, and upload-aware ownership/backpressure. ROM and board controls remain available; CNN arithmetic and weights are unchanged.
+- Added Python upload support for exact raw/.mem pixels and grayscale/resized PNG/JPEG eye crops. Installed Pillow 12.3.0 only in the local virtual environment. Twelve host tests PASS.
+- Resolved 23 simulation configurations across final Icarus runs and xsim; 37 real-CNN upload frames match integer/temporal references, and xsim independently confirms upload plus 87 legacy real-UART results.
+- Final 100 MHz implementation: setup +1.273 ns, hold +0.037 ns, 1,677 LUT, 1,639 FF, 7 BRAM tiles, 3 DSP. Generated build/uart_hw_20261103_140549/drowsiness_top.bit; source hashes and raw evidence retained.
+- Physical tests remain pending: current port enumeration identifies only Bluetooth ports. No board programming, commit, or push performed. Details and limitations: integration/docs/IMAGE_UPLOAD_VERIFICATION.md.
+
 ## 2026-11-02 UART control and telemetry
 
 Base revision: e9bc475; development branch: feature/uart. Source changes are not committed or pushed.
