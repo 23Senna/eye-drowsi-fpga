@@ -38,9 +38,9 @@ and hardware details.
 | int8 model accuracy | train 97.2% · valid 94.4% · **test 98.1%** (108 images) | Recomputed from `ml/export/*.mem` and `ml/*.npz` with the bit-exact NumPy model |
 | RTL vs. golden model | **16/16 logit pairs identical** (`rtl/cnn_top.v`) | Icarus Verilog via `./run_sim.sh` |
 | Unit tests | All pass with 0 errors | `./run_sim.sh` |
-| Latency | Approximately 75.8k cycles/image | Sequential one-MAC datapath; measured by simulation |
-| Resources | 5,063 LUT (24%), 9,858 FF (24%), 5 BRAM, 0 DSP | Historical Vivado 2024.2 reports; re-synthesis required |
-| **Timing at 100 MHz** | **Not yet verified after the one-MAC restoration** | Run synthesis and implementation again |
+| Latency | 37,290 cycles/image = 373 µs at 100 MHz | Pipelined layers (`conv1_layer`, `conv2_layer`, `fc_layer` with `mac_pipe`); measured by simulation |
+| Resources | 601 LUT, 700 FF, 6.5 BRAM, 3 DSP | Vivado 2025.2.1, full board top `integration/` `drowsiness_top` incl. `cnn_top` (2 Nov, without UART) |
+| **Timing at 100 MHz** | **Met: WNS +2.385 ns, WHS +0.091 ns** | Same build; 100 MHz board clock used directly, no MMCM |
 
 > **Evaluation caveat:** The test set is small and all samples come from one
 > subject. Treat the 98.1% test accuracy as optimistic; see the issues document
@@ -53,7 +53,9 @@ and hardware details.
 ├── run_sim.sh                  # Runs all simulations and checks golden outputs
 ├── rtl/
 │   ├── basys3_wrapper.v        # FPGA top: buttons, switches, LEDs, 7-segment
-│   ├── cnn_top.v               # Sequential FSM and one-MAC datapath
+│   ├── cnn_top.v               # Image loader, img/a1/a2 buffers (synchronous reads), layer sequencing FSM
+│   ├── conv1_layer.v, conv2_layer.v, fc_layer.v  # Pipelined layers (mac_pipe + relu_requant + maxpool2x2)
+│   ├── mac_pipe.v              # Pipelined multiply-accumulate
 │   ├── rom_weights.v           # Synchronous .mem ROMs
 │   ├── seven_seg_drive.v       # Displays OPN / CLSD / ----
 │   ├── conv_pe.v, relu_requant.v
@@ -61,6 +63,7 @@ and hardware details.
 │   └── legacy/cnn_top_original_buggy.v
 ├── sim/
 │   ├── tb_cnn.v                # Top-level testbench for 16 images
+│   ├── tb_conv1_layer.v, tb_conv2_layer.v, tb_fc_layer.v  # Layer-level testbenches
 │   ├── unit/                   # Unit testbenches and vector generator
 │   └── unit_vectors/           # Reference test vectors
 ├── constraints/basys3.xdc
@@ -126,8 +129,10 @@ vivado -mode batch -source vivado/create_project.tcl
 ```
 
 Open the generated project, then run synthesis, implementation, and bitstream
-generation. Check timing first: the current design does not meet 100 MHz, and
-the existing Vivado resource reports were produced before the RTL fix.
+generation. The pipelined `cnn_top` meets 100 MHz (WNS +2.385 ns in the
+integration build, Vivado 2025.2.1); the reports in `docs/reports/` are older
+than the pipelined RTL. For the full drowsiness demo use `integration/`
+(see [integration/README.md](integration/README.md)).
 
 #### Vivado simulation top levels
 

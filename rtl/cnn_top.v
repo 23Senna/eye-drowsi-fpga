@@ -3,7 +3,7 @@
 // cnn_top : structural top
 //
 //   rom_weights --> conv1_layer --> conv2_layer --> fc_layer
-//                    (mac_unit, relu_requant, maxpool2x2 inside each conv layer)
+//                    (mac_pipe, relu_requant, maxpool2x2 inside each conv layer)
 //
 // Top only owns: image loader, the three buffers (img / a1 / a2),
 //                the ROM instance, and a small sequencing FSM.
