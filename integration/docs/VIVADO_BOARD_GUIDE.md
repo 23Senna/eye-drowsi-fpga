@@ -4,10 +4,10 @@ Design = the integration RTL (`integration/rtl`: `drowsiness_top`, `input_contro
 + the CNN core of this repo (`rtl/cnn_top.v`, `rom_weights.v`, ROM files in `ml/export/`).
 Constraints: `integration/constraints/basys3.xdc`. Vivado 2025.2.1, part `xc7a35tcpg236-1`.
 
-**Clock:** the board's 100 MHz clock goes through an MMCM in `drowsiness_top` to a **50 MHz** system clock, because
-the team's `cnn_top` has a 16.6 ns path (conv2 MAC) that fails at 100 MHz. Debounce, 100 ms frames and the
-display refresh are scaled, so the board behaves the same. When the CNN team pipelines that path, set
-`CLK_MHZ = 100` in `drowsiness_top.v` to bypass the MMCM.
+**Clock:** the board's 100 MHz clock (W5) is the system clock directly (`CLK_MHZ = 100` in `drowsiness_top.v`, no
+MMCM): the team's pipelined `cnn_top` meets 100 MHz (WNS +2.385 ns, 2 Nov build). One inference = 37,290 cycles =
+373 µs (SW15 shows `0372`). `CLK_MHZ = 50` would put an MMCM in front (only needed for the old one-MAC core);
+debounce, 100 ms frames and the display refresh scale with `CLK_MHZ`, so the board behaves the same.
 
 Paths below are relative to the repository root (`<repo>`). Use forward slashes in the Vivado Tcl console.
 
@@ -104,10 +104,11 @@ Slot labels / golden logits: `ml/export/expected.txt` (label 1 = open; display s
 
 ## Troubleshooting
 
-- **WNS < 0 (timing fails)**: with the 50 MHz MMCM clock it should pass. If it does not (e.g. the CNN team
-  changed `cnn_top`), open the worst path (Timing → double-click the top path) and send it to the CNN team;
-  their known long path is `a1_idx` math → 484-entry `a1_mem` read → multiply → `acc2`. A lower clock is a
-  one-line change: `CLK_MHZ` in `drowsiness_top.v` (VCO 1000 MHz / CLK_MHZ must be an integer ≥ 2, e.g. 40, 25).
+- **WNS < 0 (timing fails)**: the 2 Nov build meets 100 MHz with WNS +2.385 ns. If a new `cnn_top` fails, open the
+  worst path (Timing → double-click the top path) and send it to the CNN team (a combinational read of the
+  img/a1/a2 buffers in `cnn_top` brings back the old ~16.6 ns path: buffer read → multiply → accumulate).
+  Emergency fallback is a one-line change: `CLK_MHZ = 50` in `drowsiness_top.v` adds an MMCM (VCO 1000 MHz /
+  CLK_MHZ must be an integer ≥ 2, e.g. 50, 40, 25); the latency display then shows `0745`.
 - **Board not detected**: other USB cable/port (some cables are charge-only), power switch on, JP1 on JTAG.
   Drivers: run `E:\AMD-Tools\2025.2.1\Vivado\data\xicom\cable_drivers\nt64\digilent\install_digilent.exe`
   (as administrator), re-plug.
