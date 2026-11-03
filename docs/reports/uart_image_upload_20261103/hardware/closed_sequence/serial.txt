@@ -1,0 +1,32 @@
+READY 4
+OK FRAME 4
+OK RUN
+RESULT source=UPLOAD slot=0 class=CLOSED warning=AWAKE logit0=8884 logit1=-9142 cycles=37290 us=372 frame_id=4
+READY 5
+OK FRAME 5
+OK RUN
+RESULT source=UPLOAD slot=0 class=CLOSED warning=AWAKE logit0=8884 logit1=-9142 cycles=37290 us=372 frame_id=5
+READY 6
+OK FRAME 6
+OK RUN
+RESULT source=UPLOAD slot=0 class=CLOSED warning=AWAKE logit0=8884 logit1=-9142 cycles=37290 us=372 frame_id=6
+READY 7
+OK FRAME 7
+OK RUN
+RESULT source=UPLOAD slot=0 class=CLOSED warning=AWAKE logit0=8884 logit1=-9142 cycles=37290 us=372 frame_id=7
+READY 8
+OK FRAME 8
+OK RUN
+RESULT source=UPLOAD slot=0 class=CLOSED warning=AWAKE logit0=8884 logit1=-9142 cycles=37290 us=372 frame_id=8
+READY 9
+OK FRAME 9
+OK RUN
+RESULT source=UPLOAD slot=0 class=CLOSED warning=AWAKE logit0=8884 logit1=-9142 cycles=37290 us=372 frame_id=9
+READY 10
+OK FRAME 10
+OK RUN
+RESULT source=UPLOAD slot=0 class=CLOSED warning=AWAKE logit0=8884 logit1=-9142 cycles=37290 us=372 frame_id=10
+READY 11
+OK FRAME 11
+OK RUN
+RESULT source=UPLOAD slot=0 class=CLOSED warning=MICROSLEEP logit0=8884 logit1=-9142 cycles=37290 us=372 frame_id=11

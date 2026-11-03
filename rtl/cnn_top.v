@@ -8,11 +8,14 @@
 // Top only owns: image loader, the three buffers (img / a1 / a2),
 //                the ROM instance, and a small sequencing FSM.
 //==============================================================================
-module cnn_top (
+module cnn_top #(parameter EXTERNAL_INPUT = 0) (
     input clk,
     input rst,
     input start,
     input [13:0] img_base_addr,
+    input external_image,
+    output wire [9:0] external_addr,
+    input [7:0] external_data,
     output reg done,
     output reg prediction,      // 0: Closed, 1: Open
     output signed [31:0] logit0,
@@ -38,6 +41,7 @@ module cnn_top (
 
     reg [3:0] state;
     reg [9:0] load_cnt;
+    reg external_q;
 
     // layer handshakes
     wire l1_start = (state == ST_L1_GO);
@@ -53,6 +57,7 @@ module cnn_top (
     wire [7:0]  fc_w_addr;  wire signed [7:0]  fc_w_data;
     wire        fc_b_addr;  wire signed [31:0] fc_b_data;
     reg  [13:0] rom_img_addr;
+    assign external_addr = rom_img_addr[9:0];
     wire [7:0]  rom_img_data;
 
     rom_weights rom_inst (
@@ -118,7 +123,7 @@ module cnn_top (
 
     // ---------------- Buffer writes
     always @(posedge clk) begin
-        if (state == ST_LOAD_RD) img_mem[load_cnt] <= rom_img_data;
+        if (state == ST_LOAD_RD) img_mem[load_cnt] <= external_q ? external_data : rom_img_data;
         if (a1_we)               a1_mem[a1_waddr]  <= a1_wdata;
         if (a2_we)               a2_mem[a2_waddr]  <= a2_wdata;
     end
@@ -130,11 +135,13 @@ module cnn_top (
             done       <= 1'b0;
             prediction <= 1'b0;
             load_cnt   <= 10'd0;
+            external_q <= 1'b0;
         end else begin
             case (state)
                 ST_IDLE: begin
                     done <= 1'b0;
                     if (start) begin
+                        external_q <= EXTERNAL_INPUT ? external_image : 1'b0;
                         load_cnt     <= 10'd0;
                         rom_img_addr <= img_base_addr;
                         state        <= ST_LOAD_REQ;

@@ -1,0 +1,1 @@
+top=drowsiness_top part=xc7a35tcpg236-1 clock_mhz=100 setup_ns=1.273 hold_ns=0.037

@@ -1,0 +1,13 @@
+{
+  "tested_tree_revision": "9d8bff9707c5c8c3df5e641a81e9a0e389f2c059",
+  "upstream_main": "56c0237",
+  "clock_mhz": 100,
+  "setup_ns": 1.273,
+  "hold_ns": 0.037,
+  "lut": 1677,
+  "ff": 1639,
+  "bram_tiles": 7,
+  "dsp": 3,
+  "bitstream_sha256": "C26F9631A72648D20E3A407E8352E5FE1469EDD60BFB48DB27B533CB869B6B85",
+  "physically_tested_this_rebuild": false
+}

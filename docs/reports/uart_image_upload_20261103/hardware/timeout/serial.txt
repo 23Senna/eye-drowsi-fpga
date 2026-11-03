@@ -1,0 +1,14 @@
+TEST timeout; SW9 up, SW13 down; frame_id=200
+TX LOAD 00C8
+READY 200
+TX 64/576 pixels; sender stopped without closing the COM port
+ERR TIMEOUT
+TX RUN_FRAME 00C8
+ERR NOFRAME
+PASS invalid frame rejected; no RESULT observed in the checked interval
+RECOVERY: upload a complete valid image with a fresh ID
+READY 201
+OK FRAME 201
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-17106 logit1=17976 cycles=37290 us=372 frame_id=201
+PASS timeout: rejection and valid-upload recovery match

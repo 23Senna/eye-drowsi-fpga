@@ -1,0 +1,22 @@
+[
+  {
+    "file": "eye_closed.png",
+    "test_index": 7,
+    "ground_truth": 0,
+    "class": "CLOSED",
+    "logit0": 8884,
+    "logit1": -9142,
+    "pixels_match_any_rom_image": false,
+    "sha256": "304fb86a3dda0669738b7d79ce1847fdaead075f7573aae2ea5940f5d310f42d"
+  },
+  {
+    "file": "eye_open.png",
+    "test_index": 61,
+    "ground_truth": 1,
+    "class": "OPEN",
+    "logit0": -24956,
+    "logit1": 25692,
+    "pixels_match_any_rom_image": false,
+    "sha256": "9ac98d80dfa362d7f6df6c71ef86cd06ec2fd61b4b00f1652e2b03bf6a50592c"
+  }
+]

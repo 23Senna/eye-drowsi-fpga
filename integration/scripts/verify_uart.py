@@ -3,6 +3,7 @@ import argparse
 import datetime
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -15,6 +16,10 @@ def main():
     parser.add_argument('--baseline', action='store_true', help='Test the committed HEAD before local edits')
     parser.add_argument('--only', nargs='*', help='Test names; default: full regression')
     args=parser.parse_args()
+    # Windows compiler subprocesses (ivl.exe) need DLLs next to iverilog.exe.
+    compiler=shutil.which('iverilog')
+    if compiler:
+        os.environ['PATH']=str(Path(compiler).resolve().parent)+os.pathsep+os.environ.get('PATH','')
     root=Path(__file__).resolve().parents[2]
     run=root/'build'/('verify_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f'))
     src=run/'source';src.mkdir(parents=True)
@@ -39,16 +44,19 @@ def main():
     def command(name,cmd,cwd=src,expect_failure=False):
         (run/(name+'.command.json')).write_text(json.dumps([str(x) for x in cmd]))
         try:
-            p=subprocess.run([str(x) for x in cmd],cwd=cwd,capture_output=True,text=True,errors='replace',timeout=600)
+            with (run/(name+'.log')).open('w',encoding='utf-8') as output:
+                p=subprocess.run([str(x) for x in cmd],cwd=cwd,stdout=output,stderr=subprocess.STDOUT,timeout=600)
         except subprocess.TimeoutExpired as exc:
-            (run/(name+'.log')).write_text(str(exc));raise RuntimeError(name+' timed out') from exc
-        text=p.stdout+p.stderr;(run/(name+'.log')).write_text(text,encoding='utf-8')
+            raise RuntimeError(name+' timed out; partial output retained in log') from exc
+        text=(run/(name+'.log')).read_text(encoding='utf-8',errors='replace')
         if expect_failure:
             if p.returncode == 0: raise RuntimeError(name+' unexpectedly succeeded')
         elif p.returncode:raise RuntimeError(f'{name}: exit {p.returncode}\n{text[-2000:]}')
         return text
 
     command('generate_integration',[sys.executable,src/'integration/scripts/gen_sim_data.py'])
+    if not args.baseline:
+        command('generate_upload',[sys.executable,src/'integration/scripts/gen_upload_vectors.py'])
     unit=run/'unit';mem=unit/'mem';mem.mkdir(parents=True)
     for p in (src/'ml/export').iterdir():
         if p.suffix=='.mem' or p.name=='params.txt':shutil.copyfile(p,mem/p.name)
@@ -56,7 +64,7 @@ def main():
     rtl=src/'rtl';ir=src/'integration/rtl';sim=src/'integration/sim'
     cnn=[rtl/(m+'.v') for m in ['cnn_top','rom_weights','conv1_layer','conv2_layer','fc_layer','mac_pipe','relu_requant','maxpool2x2']]
     core=[ir/(m+'.v') for m in ['drowsiness_top','input_control','drowsy_fsm','alert_control']]
-    serial=[ir/(m+'.v') for m in ['uart_rx','uart_tx','uart_command','uart_ascii_tx','uart_monitor']] if not args.baseline else []
+    serial=[ir/(m+'.v') for m in ['uart_rx','uart_tx','uart_command','uart_ascii_tx','uart_monitor','uart_image_rx']] if not args.baseline else []
     stub=[ir/(m+'.v') for m in ['cnn_core_stub','image_rom','weight_bias_rom']]
     tests={
         'tb_cnn':(src/'sim/tb_cnn.v',cnn,src/'ml/export',[]),
@@ -81,7 +89,9 @@ def main():
             'tb_uart_latency_50':(sim/'tb_uart_latency.v',serial,sim,['-P','tb_uart_latency.MHZ=50']),
             'tb_uart_system_stub':(sim/'tb_uart_system.v',core+serial+stub,sim,['-DUSE_STUB']),
             'tb_uart_system_real':(sim/'tb_uart_system.v',core+serial+cnn,sim,[])})
+        tests['tb_uart_upload']=(sim/'tb_uart_upload.v',core+serial+cnn,sim,[])
     selected=args.only or list(tests)
+    report['sources']={p.relative_to(src).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in src.rglob('*') if p.is_file()}
     failed=False
     for name in selected:
         tb,files,cwd,opts=tests[name]
@@ -95,8 +105,8 @@ def main():
                 assert len(got)==16 and all(got.get(i)==(l0,l1) for i,lab,pred,l0,l1 in expected)
                 summary='16/16 golden logit pairs; '+str(sum((got[i][1]>got[i][0])==bool(lab) for i,lab,*_ in expected))+'/16 correct labels'
             else:
-                assert 'FAIL' not in text and 'ERROR:' not in text
-                assert 'PASS '+top in text or re.search(r'TEST PASSED\s*:\s*'+re.escape(top),text)
+                assert 'FAIL' not in text and 'ERROR:' not in text, 'Simulator emitted FAIL/ERROR; see log'
+                assert 'PASS '+top in text or re.search(r'TEST PASSED\s*:\s*'+re.escape(top),text), 'No checked PASS summary; see log'
                 summary='; '.join(l for l in text.splitlines() if 'PASS' in l or 'errors' in l or 'latency' in l)
             report['tests'].append({'name':name,'status':'PASS','summary':summary});print('PASS',name,summary,flush=True)
             if name=='tb_relu_requant' and not args.baseline:

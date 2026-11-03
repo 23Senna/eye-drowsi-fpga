@@ -1,5 +1,14 @@
 # Integration Decisions
 
+## 2026-11-03: External image input over UART
+
+- Add a fixed 24x24 uint8 upload path while preserving ROM SLOT/RUN and board modes.
+- Stage 576 bytes in synchronous-read RAM, validate CRC-16/CCITT-FALSE, then explicitly RUN_FRAME. Preserve the CNN loader's one-clock read contract, arithmetic and model exports.
+- Use LOAD/RUN_FRAME with four-hex-digit IDs and decimal replies; identify results as source=UPLOAD with frame_id. Consume an uploaded frame once and reject immediate reuse of the last consumed ID.
+- Reserve ownership during reception and output. Timeout/framing errors drain through a quiet interval before parser recovery. No automatic retries after uncertain execution.
+- Do not interpret arbitrary uploads as elapsed closure time: temporal rules still count observations. Reset between sessions and record cadence for demonstrations.
+- Retain final build and source-identified verification evidence; see integration/docs/IMAGE_UPLOAD_VERIFICATION.md. Physical acceptance remains pending.
+
 ## 2026-11-02: UART alignment with upstream fixed-point export
 
 - Baseline: f9654aa971bc0ee45e52cd35baa335ecd28d85bd (PR 4 export and PR 5 RTL synchronization).

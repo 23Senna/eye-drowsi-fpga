@@ -1,5 +1,13 @@
 # UART Verification Record
 
+## 2026-11-03: External image upload
+
+The new image-input build preserves SLOT/RUN and adds CRC-checked binary
+uploads. See [image-upload verification](IMAGE_UPLOAD_VERIFICATION.md) for
+the current final bitstream, 23 resolved simulation checks, 12 host tests,
+resource/timing reports and physical-test limitations. Earlier sections
+below document builds from 2026-11-02.
+
 ## Current UART build: upstream fixed-point export (2026-11-02)
 
 Baseline: `f9654aa971bc0ee45e52cd35baa335ecd28d85bd`, branch `feature/uart`, S1=10, S2=6. No new project commit or push.

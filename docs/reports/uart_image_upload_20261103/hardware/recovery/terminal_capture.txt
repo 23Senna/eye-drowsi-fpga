@@ -1,0 +1,136 @@
+PS C:\Karan\Program_KCCI\Training_Technical\Project_Modul_3_FPGA> foreach ($frameId in 12..43) {
+>>     .\.venv\Scripts\python.exe tools\uart_cli.py --port COM6 upload --image build\uart_upload_demo\eye_open.png --frame-id $frameId |
+>>         Tee-Object -FilePath $logUji -Append
+>>
+>>     if ($LASTEXITCODE -ne 0) {
+>>         throw "Pengujian berhenti pada frame $frameId"
+>>     }
+>> }
+READY 12
+OK FRAME 12
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=MICROSLEEP logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=12
+READY 13
+OK FRAME 13
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=MICROSLEEP logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=13
+READY 14
+OK FRAME 14
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=MICROSLEEP logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=14
+READY 15
+OK FRAME 15
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=MICROSLEEP logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=15
+READY 16
+OK FRAME 16
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=MICROSLEEP logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=16
+READY 17
+OK FRAME 17
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=MICROSLEEP logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=17
+READY 18
+OK FRAME 18
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=MICROSLEEP logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=18
+READY 19
+OK FRAME 19
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=MICROSLEEP logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=19
+READY 20
+OK FRAME 20
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=MICROSLEEP logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=20
+READY 21
+OK FRAME 21
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=21
+READY 22
+OK FRAME 22
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=22
+READY 23
+OK FRAME 23
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=23
+READY 24
+OK FRAME 24
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=24
+READY 25
+OK FRAME 25
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=25
+READY 26
+OK FRAME 26
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=26
+READY 27
+OK FRAME 27
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=27
+READY 28
+OK FRAME 28
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=28
+READY 29
+OK FRAME 29
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=29
+READY 30
+OK FRAME 30
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=30
+READY 31
+OK FRAME 31
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=31
+READY 32
+OK FRAME 32
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=32
+READY 33
+OK FRAME 33
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=33
+READY 34
+OK FRAME 34
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=34
+READY 35
+OK FRAME 35
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=35
+READY 36
+OK FRAME 36
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=DROWSY logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=36
+READY 37
+OK FRAME 37
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=37
+READY 38
+OK FRAME 38
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=38
+READY 39
+OK FRAME 39
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=39
+READY 40
+OK FRAME 40
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=40
+READY 41
+OK FRAME 41
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=41
+READY 42
+OK FRAME 42
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=42
+READY 43
+OK FRAME 43
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=43

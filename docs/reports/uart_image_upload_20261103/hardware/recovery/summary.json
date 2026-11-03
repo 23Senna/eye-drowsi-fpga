@@ -1,0 +1,22 @@
+{
+  "evidence_source": "Operator-supplied COM6 terminal capture",
+  "records": 32,
+  "frame_ids": [
+    12,
+    43
+  ],
+  "golden_and_temporal_mismatches": 0,
+  "transitions": [
+    {
+      "frame_id": 21,
+      "warning": "DROWSY"
+    },
+    {
+      "frame_id": 37,
+      "warning": "AWAKE"
+    }
+  ],
+  "capture_sha256": "30f636c503738a530eb14279435affaa81e368ced51038dbb71a31b4faab9ce1",
+  "reference_initial_state": "Eight CLOSED observations after instructed reset, matching prior supplied capture",
+  "independently_verified_bitstream_identity": false
+}

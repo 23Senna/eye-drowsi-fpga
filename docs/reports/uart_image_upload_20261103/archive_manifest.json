@@ -1,0 +1,217 @@
+[
+  {
+    "archive": "implementation/operator_tested_build/timing.rpt",
+    "original": "build/uart_hw_20261103_140549/timing.rpt",
+    "sha256": "100edf8877c09116609f6fd590e93daa53358c72021e3d0cb78bcd78dc082bbc"
+  },
+  {
+    "archive": "implementation/operator_tested_build/utilization.rpt",
+    "original": "build/uart_hw_20261103_140549/utilization.rpt",
+    "sha256": "003340782e5cf2cdaf98dab6da496144120e8dee97731af09263912b1d33fca7"
+  },
+  {
+    "archive": "implementation/operator_tested_build/synth_utilization.rpt",
+    "original": "build/uart_hw_20261103_140549/synth_utilization.rpt",
+    "sha256": "6a54be973a2fe377256eceac508889f499edd4b95947e8768a61e14dc7d5293a"
+  },
+  {
+    "archive": "implementation/operator_tested_build/check_timing.rpt",
+    "original": "build/uart_hw_20261103_140549/check_timing.rpt",
+    "sha256": "21af116ec295c5f38568e908a5398aa41d0f0ba756478c3bd91ca54270f4053f"
+  },
+  {
+    "archive": "implementation/operator_tested_build/drc.rpt",
+    "original": "build/uart_hw_20261103_140549/drc.rpt",
+    "sha256": "b8a8b4a5e98c6f2edd91470d31449a37393a31ccddcf8486037fe5eb391555a6"
+  },
+  {
+    "archive": "implementation/operator_tested_build/result.txt",
+    "original": "build/uart_hw_20261103_140549/result.txt",
+    "sha256": "cccdd28b419c8ff1be4a4a3ca6d28ca629f21d27363075130ce36ccab7dca5bb"
+  },
+  {
+    "archive": "implementation/operator_tested_build/source_sha256.json",
+    "original": "build/uart_hw_20261103_140549/source_sha256.json",
+    "sha256": "9289a168456ca23ea1822c057c21c782c24c0dc5a01ffaf4bb273723292c3e66"
+  },
+  {
+    "archive": "implementation/operator_tested_build/bitstream_sha256.txt",
+    "original": "build/uart_hw_20261103_140549/bitstream_sha256.txt",
+    "sha256": "d09ebd8a87d6f5fb908417a8700a4c9f75101dffef6477cc5dab0ea0b10bf53e"
+  },
+  {
+    "archive": "implementation/operator_tested_build/verification_summary.json",
+    "original": "build/uart_hw_20261103_140549/verification_summary.json",
+    "sha256": "03632e6bbf0ee2c8f8730dcb701cefe150cfbda193c169daba400d878a931ee5"
+  },
+  {
+    "archive": "simulation/original_regression.json",
+    "original": "build/verify_20261103_140452_875386/summary.json",
+    "sha256": "600b5e39210ce6beb23bc2d591683f69636637a5b05978008f7a1f356b5c264d"
+  },
+  {
+    "archive": "simulation/original_upload.json",
+    "original": "build/verify_20261103_140417_256955/summary.json",
+    "sha256": "482e5f1cfc475f4ba10e92f61191e79a8bb10b0c32d3c1d58703147806b21884"
+  },
+  {
+    "archive": "simulation/original_tb_uart_upload.txt",
+    "original": "build/upload_xsim_20261103_140721/tb_uart_upload.log",
+    "sha256": "03ef9f32304920e1399fddf16d0a24dc981dea4b648ebd82c30abe7a0e215529"
+  },
+  {
+    "archive": "simulation/original_tb_uart_system.txt",
+    "original": "build/upload_xsim_20261103_140721/tb_uart_system.log",
+    "sha256": "168e0b53139fb24b2f938266b0ad42b6d0e5431cd73e438979648e40e290a6d7"
+  },
+  {
+    "archive": "hardware/first/serial.txt",
+    "original": "build/hardware_uart_upload_first/serial.log",
+    "sha256": "12fc4901088345f8121e30aaf0a79f63d87424c4d4a4de930a7642f1e4928042"
+  },
+  {
+    "archive": "hardware/first/summary.json",
+    "original": "build/hardware_uart_upload_first/summary.json",
+    "sha256": "83ecdce20ebe1b4ed80ce147722297d4d4dc1e0ee727a07ba97841998ceac5fb"
+  },
+  {
+    "archive": "hardware/new_images/serial.txt",
+    "original": "build/hardware_uart_upload_new_images/serial.log",
+    "sha256": "66a2f132733cd153c071a5cdc5a0bd1a9af0d00f650f12b82674ca031264a2c3"
+  },
+  {
+    "archive": "hardware/new_images/summary.json",
+    "original": "build/hardware_uart_upload_new_images/summary.json",
+    "sha256": "ed673dc22b9121fcdc6d1f0d989edc4c5642b8210dacd85ebed50cac0b7136c2"
+  },
+  {
+    "archive": "hardware/closed_sequence/serial.txt",
+    "original": "build/hardware_uart_upload_closed_sequence/serial.log",
+    "sha256": "64ac69726a9ddf00bcdd706a34d7558a167f9633e750195eb7039258bd0e0cfd"
+  },
+  {
+    "archive": "hardware/closed_sequence/summary.json",
+    "original": "build/hardware_uart_upload_closed_sequence/summary.json",
+    "sha256": "d7aeaadcbeef08fa9acbfe275e2cee7ce37d8217d9a3e1c49838aee96574d40f"
+  },
+  {
+    "archive": "hardware/recovery/summary.json",
+    "original": "build/hardware_uart_upload_recovery/summary.json",
+    "sha256": "f00275b3e12fa98b045bbc96fe5a91295255b2832c7aab4433a7734ccfab7fab"
+  },
+  {
+    "archive": "hardware/recovery/terminal_capture.txt",
+    "original": "build/hardware_uart_upload_recovery/terminal_capture.txt",
+    "sha256": "30f636c503738a530eb14279435affaa81e368ced51038dbb71a31b4faab9ce1"
+  },
+  {
+    "archive": "hardware/crc/serial.txt",
+    "original": "build/physical_upload_crc_20261103_144833_159064/serial.log",
+    "sha256": "ffa4c90eb8a8b84f60662bc287362725ee52595f07d3bd7c5ae886672f34750a"
+  },
+  {
+    "archive": "hardware/crc/summary.json",
+    "original": "build/physical_upload_crc_20261103_144833_159064/summary.json",
+    "sha256": "fefc668e8c0ff923ecedd8f1dc6f4686e6b5c40979639b01206bb9ff308eb8c5"
+  },
+  {
+    "archive": "hardware/timeout/serial.txt",
+    "original": "build/physical_upload_timeout_20261103_144913_782654/serial.log",
+    "sha256": "689053cfcd7f2c20a23a1fe0a152622414a399c2d43c171ae037ea5c4badb326"
+  },
+  {
+    "archive": "hardware/timeout/summary.json",
+    "original": "build/physical_upload_timeout_20261103_144913_782654/summary.json",
+    "sha256": "d9bf53a6f0f6fc78c8d659ba3880622e614a5bcf43e869c59f3bd64fec4cb2dd"
+  },
+  {
+    "archive": "hardware/reset/serial.txt",
+    "original": "build/physical_upload_reset_20261103_144946_468206/serial.log",
+    "sha256": "61a9c72e0d2db58488aa04d9a6b4156f308614f60705f8cee53299bd88277fa3"
+  },
+  {
+    "archive": "hardware/reset/summary.json",
+    "original": "build/physical_upload_reset_20261103_144946_468206/summary.json",
+    "sha256": "5a6b4a0f88321da44e03ef7683883f3a919b237b9fcc988f7f6277c321f38424"
+  },
+  {
+    "archive": "hardware/demo/eye_closed.png",
+    "original": "build/uart_upload_demo/eye_closed.png",
+    "sha256": "304fb86a3dda0669738b7d79ce1847fdaead075f7573aae2ea5940f5d310f42d"
+  },
+  {
+    "archive": "hardware/demo/eye_open.png",
+    "original": "build/uart_upload_demo/eye_open.png",
+    "sha256": "9ac98d80dfa362d7f6df6c71ef86cd06ec2fd61b4b00f1652e2b03bf6a50592c"
+  },
+  {
+    "archive": "hardware/demo/expected.json",
+    "original": "build/uart_upload_demo/expected.json",
+    "sha256": "efa2f26418de78e9c9823b2ab8fb63521923866bef53453d1d72b69beb8a5d2a"
+  },
+  {
+    "archive": "simulation/host_tests.txt",
+    "original": "build/uart_upload_pr_host_tests.log",
+    "sha256": "280b8b7f169b82b2fa1f0aaf11db7074a20efcc0ed66cdc7d09886e00f7a4ed6"
+  },
+  {
+    "archive": "simulation/integrated_targeted.json",
+    "original": "build/verify_20261103_150201_623703/summary.json",
+    "sha256": "d4e2f329bf48e4a9d7d50dce1968ad9ad05be23894bbf049b2b42dc3f17cad04"
+  },
+  {
+    "archive": "simulation/integrated_tb_uart_upload.txt",
+    "original": "build/upload_xsim_20261103_150240/tb_uart_upload.log",
+    "sha256": "d7eea2660e37fddbf9999655e372d8a432b93233a8c5e1c6e175a68064a3e41a"
+  },
+  {
+    "archive": "simulation/integrated_tb_uart_system.txt",
+    "original": "build/upload_xsim_20261103_150240/tb_uart_system.log",
+    "sha256": "c51e6f4a53af5e1a5c50ef0c632f97de384f250dee93ddd450b14ac555f9a541"
+  },
+  {
+    "archive": "implementation/integrated_build/timing.rpt",
+    "original": "build/uart_hw_20261103_150217/timing.rpt",
+    "sha256": "bc544ef1d974e24ae37d015546fa385644838f1501f6624c6c0499ae31e97a4e"
+  },
+  {
+    "archive": "implementation/integrated_build/utilization.rpt",
+    "original": "build/uart_hw_20261103_150217/utilization.rpt",
+    "sha256": "4c6e9f24764a194652a690b88db7189deeb847b28a50c341ed74479668ba2baa"
+  },
+  {
+    "archive": "implementation/integrated_build/synth_utilization.rpt",
+    "original": "build/uart_hw_20261103_150217/synth_utilization.rpt",
+    "sha256": "84ffa17ca2e60e6d9f1ecde4e790e9485bd06a0859a7d9bbce443292c4da2568"
+  },
+  {
+    "archive": "implementation/integrated_build/check_timing.rpt",
+    "original": "build/uart_hw_20261103_150217/check_timing.rpt",
+    "sha256": "39f68f84fefa1244a9c6b62371e46dc2f5db6a5570aaad11dd86b05dfcf829bc"
+  },
+  {
+    "archive": "implementation/integrated_build/drc.rpt",
+    "original": "build/uart_hw_20261103_150217/drc.rpt",
+    "sha256": "4968515bb51185359b56930c800c489d9a3c899012702243d70a9d0754c179a3"
+  },
+  {
+    "archive": "implementation/integrated_build/result.txt",
+    "original": "build/uart_hw_20261103_150217/result.txt",
+    "sha256": "cccdd28b419c8ff1be4a4a3ca6d28ca629f21d27363075130ce36ccab7dca5bb"
+  },
+  {
+    "archive": "implementation/integrated_build/source_sha256.json",
+    "original": "build/uart_hw_20261103_150217/source_sha256.json",
+    "sha256": "f87f59a248520ddd873ea8cf36d5600353e3dc214563eadf355e5c8256503af0"
+  },
+  {
+    "archive": "implementation/integrated_build/bitstream_sha256.txt",
+    "original": "build/uart_hw_20261103_150217/bitstream_sha256.txt",
+    "sha256": "9c8fb5570d6f837183921a4eadaac2541f7b298b0bd40bbdae35675b084ad703"
+  },
+  {
+    "archive": "implementation/integrated_build/provenance.json",
+    "original": "build/uart_hw_20261103_150217/provenance.json",
+    "sha256": "39bfcb8ce2bc07572a7ea33029021ac3fd782b8b707e8c6d33d05411be9438f0"
+  }
+]

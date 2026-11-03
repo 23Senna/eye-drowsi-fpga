@@ -1,0 +1,138 @@
+{
+  "base_revision": "69a3e046c683ecc0d932fe74e9ef83a073d6006f",
+  "working_tree_changes": true,
+  "tests": [
+    {
+      "name": "tb_cnn",
+      "status": "PASS",
+      "summary": "16/16 golden logit pairs; 14/16 correct labels"
+    },
+    {
+      "name": "tb_relu_requant",
+      "status": "PASS",
+      "summary": "relu_requant S=10 : 24119 checks, 0 errors; relu_requant S=6  : 24119 checks, 0 errors; *** TEST PASSED : tb_relu_requant ***"
+    },
+    {
+      "name": "tb_relu_missing_vectors",
+      "status": "PASS",
+      "summary": "Missing vectors terminate simulation with nonzero exit"
+    },
+    {
+      "name": "tb_conv_pe",
+      "status": "PASS",
+      "summary": "conv_pe NTAPS=9  : 4000 outputs checked, 0 errors; conv_pe NTAPS=36 : 4000 outputs checked, 0 errors; *** TEST PASSED : tb_conv_pe ***"
+    },
+    {
+      "name": "tb_conv_relu_golden",
+      "status": "PASS",
+      "summary": "Layer 1 (conv_pe 9 taps  + ReLU S1=10): 7744 pooled outputs, 0 errors | windows acc<0: 19101, saturated: 0, pooled==0: 4840; Layer 2 (conv_pe 36 taps + ReLU S2=6 ): 2048 pooled outputs, 0 errors | windows acc<0: 3892, saturated: 0, pooled==0: 865; *** TEST PASSED : tb_conv_relu_golden ***"
+    },
+    {
+      "name": "tb_input_control",
+      "status": "PASS",
+      "summary": "PASS tb_input_control (3 pulses)"
+    },
+    {
+      "name": "tb_alert_control",
+      "status": "PASS",
+      "summary": "PASS tb_alert_control"
+    },
+    {
+      "name": "tb_drowsy_fsm",
+      "status": "PASS",
+      "summary": "part 1: 500 steps checked vs drowsy_ref, 0 errors; PASS tb_drowsy_fsm (500 trace steps, 128 sequence frames)"
+    },
+    {
+      "name": "tb_roms",
+      "status": "PASS",
+      "summary": "PASS tb_roms"
+    },
+    {
+      "name": "tb_cnn_control",
+      "status": "PASS",
+      "summary": "PASS tb_cnn_control (16 slots: a1, a2, logits = Python golden; latency 36124 cycles)"
+    },
+    {
+      "name": "tb_top",
+      "status": "PASS",
+      "summary": "manual: 16 slots checked, 0 errors; sequence: 128 frames checked (26 in MICROSLEEP), 0 errors total; PASS tb_top"
+    },
+    {
+      "name": "tb_top_real",
+      "status": "PASS",
+      "summary": "manual: 16 slots checked, 0 errors; cnn_top latency 37290 cycles (372 us); sequence: 64 frames checked (13 in MICROSLEEP), 0 errors total; scan: 16 frames checked, 0 errors total; PASS tb_top_real (cnn_top: 16 slots bit-exact, latency 37290 cycles)"
+    },
+    {
+      "name": "tb_conv1_layer",
+      "status": "PASS",
+      "summary": "L1 image=0 writes=484 errors=0; *** TEST PASSED: tb_conv1_layer ***"
+    },
+    {
+      "name": "tb_conv2_layer",
+      "status": "PASS",
+      "summary": "L2 image=0 writes=128 errors=0; *** TEST PASSED: tb_conv2_layer ***"
+    },
+    {
+      "name": "tb_fc_layer",
+      "status": "PASS",
+      "summary": "FC image=0 logit0=492 logit1=727 errors=0; *** TEST PASSED: tb_fc_layer ***"
+    },
+    {
+      "name": "tb_uart_phy",
+      "status": "PASS",
+      "summary": "PASS tb_uart_phy (loopback, baud tolerance, false start, framing, reset)"
+    },
+    {
+      "name": "tb_uart_command",
+      "status": "PASS",
+      "summary": "PASS tb_uart_command (all slots, LF/CRLF, range, overflow, framing, reset)"
+    },
+    {
+      "name": "tb_uart_format",
+      "status": "PASS",
+      "summary": "PASS tb_uart_format (all messages, signed extremes, decimal, reset)"
+    },
+    {
+      "name": "tb_uart_latency_100",
+      "status": "PASS",
+      "summary": "PASS tb_uart_latency (MHz=100, zero, rounding boundaries and maximum cycle count); C:\\Karan\\Program_KCCI\\Training_Technical\\Project_Modul_3_FPGA\\build\\verify_20261103_140452_875386\\source\\integration\\sim\\tb_uart_latency.v:34: $finish called at 981680000 (1ps)"
+    },
+    {
+      "name": "tb_uart_latency_50",
+      "status": "PASS",
+      "summary": "PASS tb_uart_latency (MHz=50, zero, rounding boundaries and maximum cycle count); C:\\Karan\\Program_KCCI\\Training_Technical\\Project_Modul_3_FPGA\\build\\verify_20261103_140452_875386\\source\\integration\\sim\\tb_uart_latency.v:34: $finish called at 981680000 (1ps)"
+    },
+    {
+      "name": "tb_uart_system_stub",
+      "status": "PASS",
+      "summary": "PASS tb_uart_system (16 PC slots, BOARD/SEQ telemetry, golden/temporal oracle, low-confidence hold, busy, mode, errors, overrun, reset; results=87)"
+    },
+    {
+      "name": "tb_uart_upload",
+      "status": "PASS",
+      "summary": "PASS tb_uart_upload (37 golden/temporal frames, CRC, timeout/drain, framing, ID, reset, ownership, ROM fallback)"
+    },
+    {
+      "name": "tb_uart_system_real",
+      "status": "PASS",
+      "summary": "Vivado xsim, 87 golden/temporal checked results"
+    }
+  ],
+  "primary_run": "build/verify_20261103_140452_875386",
+  "upload_run": "build/verify_20261103_140417_256955",
+  "xsim": "build/upload_xsim_20261103_140721",
+  "host_tests": 12,
+  "host_evidence": "build/uart_upload_host_tests.log",
+  "physical_validation": false,
+  "bitstream_sha256": "2162E695E3439840F2CECD674A3FEF5A5245D515B1D33879C938928C91ADB11B",
+  "implementation": {
+    "clock_mhz": 100,
+    "setup_ns": 1.273,
+    "hold_ns": 0.037,
+    "lut": 1677,
+    "ff": 1639,
+    "bram_tiles": 7,
+    "dsp": 3
+  },
+  "note": "23 configurations resolved across Icarus runs and xsim, not one all-configuration Icarus invocation. xsim also independently passes the upload test."
+}

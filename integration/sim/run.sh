@@ -18,6 +18,7 @@ mkdir -p build
 # generated files missing (fresh clone) -> generate them first
 [ -f vectors/drowsy_trace.mem ] && [ -f conv1_w.mem ] && [ -f ../mem/images.mem ] || GEN=1
 [ "${GEN:-0}" = "1" ] && { $PY ../scripts/gen_sim_data.py || exit 1; }
+$PY ../scripts/gen_upload_vectors.py || exit 1
 
 declare -A SRC=(
   [tb_input_control]="$RTL/input_control.v"
@@ -28,7 +29,7 @@ declare -A SRC=(
   [tb_top]="-DUSE_STUB $RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $RTL/image_rom.v $RTL/weight_bias_rom.v $RTL/cnn_core_stub.v"
   [tb_top_real]="$RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $TEAM_SRC"
 )
-SERIAL=""; for m in uart_rx uart_tx uart_command uart_ascii_tx uart_monitor; do SERIAL="$SERIAL $RTL/$m.v"; done
+SERIAL=""; for m in uart_rx uart_tx uart_command uart_ascii_tx uart_monitor uart_image_rx; do SERIAL="$SERIAL $RTL/$m.v"; done
 SRC[tb_top]="${SRC[tb_top]} $SERIAL"
 SRC[tb_top_real]="${SRC[tb_top_real]} $SERIAL"
 SRC[tb_uart_phy]="$RTL/uart_rx.v $RTL/uart_tx.v"
@@ -36,7 +37,8 @@ SRC[tb_uart_command]="$RTL/uart_command.v"
 SRC[tb_uart_format]="$SERIAL"
 SRC[tb_uart_latency]="$SERIAL"
 SRC[tb_uart_system]="${SRC[tb_top_real]}"
-TBS="${*:-tb_input_control tb_alert_control tb_drowsy_fsm tb_roms tb_cnn_control tb_top tb_top_real tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system}"
+SRC[tb_uart_upload]="${SRC[tb_top_real]}"
+TBS="${*:-tb_input_control tb_alert_control tb_drowsy_fsm tb_roms tb_cnn_control tb_top tb_top_real tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system tb_uart_upload}"
 
 fail=0
 for tb in $TBS; do

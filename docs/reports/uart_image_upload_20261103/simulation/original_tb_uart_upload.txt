@@ -1,0 +1,40 @@
+Time resolution is 1 ps
+upload frame 0: golden logits and temporal state match
+upload frame 1: golden logits and temporal state match
+upload frame 2: golden logits and temporal state match
+upload frame 3: golden logits and temporal state match
+upload frame 4: golden logits and temporal state match
+upload frame 5: golden logits and temporal state match
+upload frame 6: golden logits and temporal state match
+upload frame 7: golden logits and temporal state match
+upload frame 8: golden logits and temporal state match
+upload frame 9: golden logits and temporal state match
+upload frame 10: golden logits and temporal state match
+upload frame 11: golden logits and temporal state match
+upload frame 12: golden logits and temporal state match
+upload frame 13: golden logits and temporal state match
+upload frame 14: golden logits and temporal state match
+upload frame 15: golden logits and temporal state match
+upload frame 16: golden logits and temporal state match
+upload frame 17: golden logits and temporal state match
+upload frame 18: golden logits and temporal state match
+upload frame 19: golden logits and temporal state match
+upload frame 20: golden logits and temporal state match
+upload frame 21: golden logits and temporal state match
+upload frame 22: golden logits and temporal state match
+upload frame 23: golden logits and temporal state match
+upload frame 24: golden logits and temporal state match
+upload frame 25: golden logits and temporal state match
+upload frame 26: golden logits and temporal state match
+upload frame 27: golden logits and temporal state match
+upload frame 28: golden logits and temporal state match
+upload frame 29: golden logits and temporal state match
+upload frame 30: golden logits and temporal state match
+upload frame 31: golden logits and temporal state match
+upload frame 32: golden logits and temporal state match
+upload frame 33: golden logits and temporal state match
+upload frame 34: golden logits and temporal state match
+upload frame 35: golden logits and temporal state match
+upload frame 36: golden logits and temporal state match
+PASS tb_uart_upload (37 golden/temporal frames, CRC, timeout/drain, framing, ID, reset, ownership, ROM fallback)
+$finish called at time : 64906750 ns : File "C:/Karan/Program_KCCI/Training_Technical/Project_Modul_3_FPGA/build/verify_20261103_140452_875386/source/integration/sim/tb_uart_upload.v" Line 156

@@ -1,0 +1,55 @@
+{
+  "evidence_source": "User-supplied COM6 terminal output",
+  "records": [
+    {
+      "result": {
+        "source": "UPLOAD",
+        "slot": 0,
+        "eye_class": "CLOSED",
+        "warning": "AWAKE",
+        "logit0": 8884,
+        "logit1": -9142,
+        "cycles": 37290,
+        "us": 372,
+        "frame_id": 2
+      },
+      "expected": {
+        "file": "eye_closed.png",
+        "test_index": 7,
+        "ground_truth": 0,
+        "class": "CLOSED",
+        "logit0": 8884,
+        "logit1": -9142,
+        "pixels_match_any_rom_image": false,
+        "sha256": "304fb86a3dda0669738b7d79ce1847fdaead075f7573aae2ea5940f5d310f42d"
+      },
+      "golden_match": true
+    },
+    {
+      "result": {
+        "source": "UPLOAD",
+        "slot": 0,
+        "eye_class": "OPEN",
+        "warning": "AWAKE",
+        "logit0": -24956,
+        "logit1": 25692,
+        "cycles": 37290,
+        "us": 372,
+        "frame_id": 3
+      },
+      "expected": {
+        "file": "eye_open.png",
+        "test_index": 61,
+        "ground_truth": 1,
+        "class": "OPEN",
+        "logit0": -24956,
+        "logit1": 25692,
+        "pixels_match_any_rom_image": false,
+        "sha256": "9ac98d80dfa362d7f6df6c71ef86cd06ec2fd61b4b00f1652e2b03bf6a50592c"
+      },
+      "golden_match": true
+    }
+  ],
+  "build_identity": "Not independently identified by terminal excerpt",
+  "scope": "Two crops absent from all 16 committed ROM images; class/logits match Python integer reference"
+}

@@ -16,19 +16,19 @@ foreach f {drowsy_trace seq_expected expected_a1 expected_a2} {
     }
 }
 set tbs {}
-foreach t {tb_top_real tb_drowsy_fsm tb_input_control tb_alert_control tb_roms tb_cnn_control tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system} {
+foreach t {tb_top_real tb_drowsy_fsm tb_input_control tb_alert_control tb_roms tb_cnn_control tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system tb_uart_upload} {
     lappend tbs [file join $sim $t.v]
 }
 set extra_rtl {}
 foreach m {image_rom weight_bias_rom cnn_control} { lappend extra_rtl [file join $fpga rtl $m.v] }
 set data {}
 foreach f {seq stub_logits weights biases} { lappend data [file join $fpga mem $f.mem] }
-foreach f {drowsy_trace seq_expected expected_a1 expected_a2} { lappend data [file join $sim vectors $f.mem] }
+foreach f {drowsy_trace seq_expected expected_a1 expected_a2 upload_pixels upload_logits upload_warnings upload_crc} { lappend data [file join $sim vectors $f.mem] }
 
 set fs [get_filesets sim_1]
 foreach f [get_files -quiet -of_objects $fs] { remove_files -quiet -fileset sim_1 $f }
 add_files -fileset sim_1 -norecurse $tbs
-foreach t {tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system} {
+foreach t {tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system tb_uart_upload} {
     set_property file_type SystemVerilog [get_files [file join $sim $t.v]]
 }
 add_files -fileset sim_1 -norecurse $extra_rtl

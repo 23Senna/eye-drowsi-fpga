@@ -1,0 +1,14 @@
+TEST crc; SW9 up, SW13 down; frame_id=100
+TX LOAD 0064
+READY 100
+TX 576 pixels + deliberately incorrect CRC
+ERR CRC
+TX RUN_FRAME 0064
+ERR NOFRAME
+PASS invalid frame rejected; no RESULT observed in the checked interval
+RECOVERY: upload a complete valid image with a fresh ID
+READY 101
+OK FRAME 101
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-17106 logit1=17976 cycles=37290 us=372 frame_id=101
+PASS crc: rejection and valid-upload recovery match

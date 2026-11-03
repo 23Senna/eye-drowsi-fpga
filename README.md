@@ -8,7 +8,8 @@ This is the final project for **FPGA KCCI Training (Training VLSI) – Group 3**
 The motivating use case is driver-drowsiness detection for ADAS.
 
 > **Scope:** The FPGA classifies pre-cropped, pre-stored eye images. The board
-> contains 16 test images in ROM, selected with switches. It does not provide
+> contains 16 test images in ROM, selected with switches, and the integration
+> top can accept new 24x24 eye crops over UART. It does not provide
 > camera input, face detection, or eye localisation. See
 > [`docs/STATUS_AND_ISSUES.md`](docs/STATUS_AND_ISSUES.md) before quoting
 > performance figures.
@@ -80,8 +81,10 @@ and hardware details.
 ## UART extension
 
 The integration top supports 115200 8N1 UART, SW9 board/PC ownership, SLOT/RUN commands
-and RESULT telemetry from manual and sequence modes. Images remain preloaded.
-See [UART usage](integration/docs/UART.md) and [verification record](integration/docs/UART_VERIFICATION.md).
+and RESULT telemetry from manual and sequence modes. It also accepts 576-byte
+binary image uploads with CRC and frame IDs, retaining ROM mode.
+See [image upload](integration/docs/IMAGE_UPLOAD.md), [UART usage](integration/docs/UART.md)
+and [verification record](integration/docs/UART_VERIFICATION.md).
 
 ## Quick start
 

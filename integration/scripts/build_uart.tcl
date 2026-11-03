@@ -8,7 +8,7 @@ cd $out
 set_param general.maxThreads 4
 create_project uart_check [file join $out project] -part xc7a35tcpg236-1
 set source_list {}
-foreach m {drowsiness_top input_control drowsy_fsm alert_control uart_rx uart_tx uart_command uart_ascii_tx uart_monitor} {
+foreach m {drowsiness_top input_control drowsy_fsm alert_control uart_rx uart_tx uart_command uart_ascii_tx uart_monitor uart_image_rx} {
     lappend source_list [file join $root integration rtl $m.v]
 }
 foreach m {cnn_top rom_weights conv1_layer conv2_layer fc_layer mac_pipe relu_requant maxpool2x2} {
