@@ -28,7 +28,7 @@ bash integration/sim/run.sh                 # all testbenches (first run generat
 GEN=1 bash integration/sim/run.sh           # regenerate after a new ml/export
 ```
 
-Expected: 7 × `PASS`; `tb_top_real` (~3 min) checks all 16 images bit-exact against `ml/export/expected.txt`,
+Expected: 12 × `PASS` (7 board-top + 5 UART testbenches); `tb_top_real` (~3 min) checks all 16 images bit-exact against `ml/export/expected.txt`,
 64 sequence frames against `scripts/drowsy_ref.py` and the scan mode.
 
 Vivado (GUI): open/create a Basys3 project, then in the Tcl console
@@ -61,6 +61,8 @@ Use `python integration/scripts/verify_uart.py` for the full working-tree simula
 ## Results (Vivado 2025.2.1, xc7a35tcpg236-1)
 
 - Pipelined `cnn_top` (conv1/conv2/fc layers with `mac_pipe`): latency 37,290 cycles = 373 us at 100 MHz.
-- 100 MHz, no MMCM (`CLK_MHZ = 100`): all constraints met (WNS +2.41 ns, WHS +0.06 ns).
-- 600 LUT, 703 FF, 6.5 BRAM, 3 DSP (img / a1 / a2 buffers are read synchronously -> block RAM).
+- Fixed-point export S1 = 10, S2 = 6 (`ml/export/params.txt`); `scripts/gen_sim_data.py` stops if the `SHIFT` in
+  `rtl/conv1_layer.v` / `conv2_layer.v` differs.
+- 100 MHz, no MMCM (`CLK_MHZ = 100`): all constraints met (WNS +2.385 ns, WHS +0.091 ns; build without UART, 2 Nov).
+- 601 LUT, 700 FF, 6.5 BRAM, 3 DSP (img / a1 / a2 buffers are read synchronously -> block RAM).
 - The older one-MAC `cnn_top` needed 50 MHz (`CLK_MHZ = 50` puts an MMCM in front).

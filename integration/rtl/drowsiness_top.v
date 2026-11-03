@@ -14,7 +14,7 @@ module drowsiness_top #(
     parameter SLOW_TICKS   = CLK_MHZ * 1000000,   // 1 s per frame with SW12 (demo)
     parameter REFRESH_BITS = (CLK_MHZ == 100) ? 18 : 17,   // ~650 us per digit
     parameter BLINK_BITS   = (CLK_MHZ == 100) ? 24 : 23,   // ~6 Hz blink
-    parameter STUB_LATENCY = 75826,       // = cnn_top latency (stub build only)
+    parameter STUB_LATENCY = 37290,       // = cnn_top latency (stub build only)
     parameter IMG_FILE     = "images.mem",
     parameter W_FILE       = "weights.mem",
     parameter B_FILE       = "biases.mem",
