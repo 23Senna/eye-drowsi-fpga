@@ -1,5 +1,9 @@
 # Development Progress
 
+## 2026-11-03: Team PR preparation and upstream integration
+
+Created codex/uart-image-upload and integrated current team main 56c0237 without conflicts, preserving the upstream documentation, shift guard, stub default and core testbench fixes. After integration, 16 host tests and four targeted Icarus checks PASS; xsim independently passes the 37-frame real upload test and 87-result legacy real-UART test. A fresh 100 MHz build (build/uart_hw_20261103_150217) reproduces setup +1.273 ns, hold +0.037 ns, 1677 LUT, 1639 FF, 7 BRAM tiles and 3 DSP. This rebuild has not been physically programmed in this session. Selected original and post-integration reports, source hashes, simulation logs, operator captures, and two non-ROM demo crops are archived under docs/reports/uart_image_upload_20261103/ for team review. Large generated build directories/bitstreams remain ignored. Current verification scope and physical observations are consolidated in integration/docs/IMAGE_UPLOAD_VERIFICATION.md; earlier pending statements below are historical.
+
 ## 2026-11-03: Physical upload fault checks and recovery
 
 Inspected the three operator-run COM6 checker logs and summaries: CRC corruption (ID 100) returns ERR CRC; partial transfer (ID 200, 64/576 pixels) returns ERR TIMEOUT; operator-held btnU reset aborts partial ID 300. All three reject RUN_FRAME with ERR NOFRAME and report no RESULT during the checked quiet interval. Fresh uploads 101/201/301 then match OPEN golden logits -17106/17976 and 37290 cycles / 372 us. All three checker summaries are PASS. Evidence: build/physical_upload_crc_20261103_144833_159064/, build/physical_upload_timeout_20261103_144913_782654/, build/physical_upload_reset_20261103_144946_468206/; consolidated index: build/hardware_uart_upload_faults/summary.json. Reset timing is operator-attested; no internal cnn_start probe or independent bitstream readback was performed.

@@ -15,6 +15,7 @@ holding the COM port. Replace COM6 with the actual port.
 .\.venv\Scripts\python.exe tools/uart_cli.py --port COM6 upload --image eye.png --frame-id 1
 .\.venv\Scripts\python.exe tools/uart_cli.py --port COM6 upload --image eye.raw --frame-id 2
 .\.venv\Scripts\python.exe tools/uart_cli.py --port COM6 upload --image ml/export/images.mem --slot 3 --frame-id 3
+.\.venv\Scripts\python.exe tools/uart_cli.py --port COM6 upload --image docs/reports/uart_image_upload_20261103/hardware/demo/eye_closed.png --frame-id 4
 ```
 
 `--frame-id` is decimal 0..65535. Use a new ID for each observation. The last

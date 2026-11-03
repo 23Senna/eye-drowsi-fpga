@@ -1,0 +1,8 @@
+READY 2
+OK FRAME 2
+OK RUN
+RESULT source=UPLOAD slot=0 class=CLOSED warning=AWAKE logit0=8884 logit1=-9142 cycles=37290 us=372 frame_id=2
+READY 3
+OK FRAME 3
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-24956 logit1=25692 cycles=37290 us=372 frame_id=3

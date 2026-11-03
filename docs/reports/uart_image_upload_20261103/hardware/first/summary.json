@@ -1,0 +1,9 @@
+{
+  "evidence_source": "User-supplied COM6 terminal output",
+  "frame_id": 1,
+  "host_mem_slot": 3,
+  "golden_match": true,
+  "reported_source": "UPLOAD",
+  "physical_build_identity": "Not independently confirmed by this terminal excerpt",
+  "bitstream_expected": "build/uart_hw_20261103_140549/drowsiness_top.bit"
+}

@@ -1,0 +1,15 @@
+TEST reset; SW9 up, SW13 down; frame_id=300
+TX LOAD 012C
+READY 300
+RESET TEST: partial upload active; operator must hold btnU during the next prompt
+TX stopped. btnU must still be held. Now release btnU.
+Operator confirmed btnU release; checking that partial frame is invalid
+TX RUN_FRAME 012C
+ERR NOFRAME
+PASS invalid frame rejected; no RESULT observed in the checked interval
+RECOVERY: upload a complete valid image with a fresh ID
+READY 301
+OK FRAME 301
+OK RUN
+RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=-17106 logit1=17976 cycles=37290 us=372 frame_id=301
+PASS reset: rejection and valid-upload recovery match

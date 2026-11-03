@@ -1,0 +1,20 @@
+{
+  "test": "timeout",
+  "port": "COM6",
+  "frame_id": 200,
+  "status": "PASS",
+  "source": "Host checker with operator-connected hardware",
+  "reset_evidence": null,
+  "limitation": "Serial observations only; no direct internal cnn_start instrumentation",
+  "recovery": {
+    "source": "UPLOAD",
+    "slot": 0,
+    "eye_class": "OPEN",
+    "warning": "AWAKE",
+    "logit0": -17106,
+    "logit1": 17976,
+    "cycles": 37290,
+    "us": 372,
+    "frame_id": 201
+  }
+}

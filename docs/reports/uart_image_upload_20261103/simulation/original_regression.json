@@ -1,0 +1,219 @@
+{
+  "base_revision": "69a3e046c683ecc0d932fe74e9ef83a073d6006f",
+  "baseline": false,
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:15:03) [MSC v.1944 64 bit (AMD64)]",
+  "tests": [
+    {
+      "name": "tb_cnn",
+      "status": "PASS",
+      "summary": "16/16 golden logit pairs; 14/16 correct labels"
+    },
+    {
+      "name": "tb_relu_requant",
+      "status": "PASS",
+      "summary": "relu_requant S=10 : 24119 checks, 0 errors; relu_requant S=6  : 24119 checks, 0 errors; *** TEST PASSED : tb_relu_requant ***"
+    },
+    {
+      "name": "tb_relu_missing_vectors",
+      "status": "PASS",
+      "summary": "Missing vectors terminate simulation with nonzero exit"
+    },
+    {
+      "name": "tb_conv_pe",
+      "status": "PASS",
+      "summary": "conv_pe NTAPS=9  : 4000 outputs checked, 0 errors; conv_pe NTAPS=36 : 4000 outputs checked, 0 errors; *** TEST PASSED : tb_conv_pe ***"
+    },
+    {
+      "name": "tb_conv_relu_golden",
+      "status": "PASS",
+      "summary": "Layer 1 (conv_pe 9 taps  + ReLU S1=10): 7744 pooled outputs, 0 errors | windows acc<0: 19101, saturated: 0, pooled==0: 4840; Layer 2 (conv_pe 36 taps + ReLU S2=6 ): 2048 pooled outputs, 0 errors | windows acc<0: 3892, saturated: 0, pooled==0: 865; *** TEST PASSED : tb_conv_relu_golden ***"
+    },
+    {
+      "name": "tb_input_control",
+      "status": "PASS",
+      "summary": "PASS tb_input_control (3 pulses)"
+    },
+    {
+      "name": "tb_alert_control",
+      "status": "PASS",
+      "summary": "PASS tb_alert_control"
+    },
+    {
+      "name": "tb_drowsy_fsm",
+      "status": "PASS",
+      "summary": "part 1: 500 steps checked vs drowsy_ref, 0 errors; PASS tb_drowsy_fsm (500 trace steps, 128 sequence frames)"
+    },
+    {
+      "name": "tb_roms",
+      "status": "PASS",
+      "summary": "PASS tb_roms"
+    },
+    {
+      "name": "tb_cnn_control",
+      "status": "PASS",
+      "summary": "PASS tb_cnn_control (16 slots: a1, a2, logits = Python golden; latency 36124 cycles)"
+    },
+    {
+      "name": "tb_top",
+      "status": "PASS",
+      "summary": "manual: 16 slots checked, 0 errors; sequence: 128 frames checked (26 in MICROSLEEP), 0 errors total; PASS tb_top"
+    },
+    {
+      "name": "tb_top_real",
+      "status": "PASS",
+      "summary": "manual: 16 slots checked, 0 errors; cnn_top latency 37290 cycles (372 us); sequence: 64 frames checked (13 in MICROSLEEP), 0 errors total; scan: 16 frames checked, 0 errors total; PASS tb_top_real (cnn_top: 16 slots bit-exact, latency 37290 cycles)"
+    },
+    {
+      "name": "tb_conv1_layer",
+      "status": "PASS",
+      "summary": "L1 image=0 writes=484 errors=0; *** TEST PASSED: tb_conv1_layer ***"
+    },
+    {
+      "name": "tb_conv2_layer",
+      "status": "PASS",
+      "summary": "L2 image=0 writes=128 errors=0; *** TEST PASSED: tb_conv2_layer ***"
+    },
+    {
+      "name": "tb_fc_layer",
+      "status": "PASS",
+      "summary": "FC image=0 logit0=492 logit1=727 errors=0; *** TEST PASSED: tb_fc_layer ***"
+    },
+    {
+      "name": "tb_uart_phy",
+      "status": "PASS",
+      "summary": "PASS tb_uart_phy (loopback, baud tolerance, false start, framing, reset)"
+    },
+    {
+      "name": "tb_uart_command",
+      "status": "PASS",
+      "summary": "PASS tb_uart_command (all slots, LF/CRLF, range, overflow, framing, reset)"
+    },
+    {
+      "name": "tb_uart_format",
+      "status": "PASS",
+      "summary": "PASS tb_uart_format (all messages, signed extremes, decimal, reset)"
+    },
+    {
+      "name": "tb_uart_latency_100",
+      "status": "PASS",
+      "summary": "PASS tb_uart_latency (MHz=100, zero, rounding boundaries and maximum cycle count); C:\\Karan\\Program_KCCI\\Training_Technical\\Project_Modul_3_FPGA\\build\\verify_20261103_140452_875386\\source\\integration\\sim\\tb_uart_latency.v:34: $finish called at 981680000 (1ps)"
+    },
+    {
+      "name": "tb_uart_latency_50",
+      "status": "PASS",
+      "summary": "PASS tb_uart_latency (MHz=50, zero, rounding boundaries and maximum cycle count); C:\\Karan\\Program_KCCI\\Training_Technical\\Project_Modul_3_FPGA\\build\\verify_20261103_140452_875386\\source\\integration\\sim\\tb_uart_latency.v:34: $finish called at 981680000 (1ps)"
+    },
+    {
+      "name": "tb_uart_system_stub",
+      "status": "PASS",
+      "summary": "PASS tb_uart_system (16 PC slots, BOARD/SEQ telemetry, golden/temporal oracle, low-confidence hold, busy, mode, errors, overrun, reset; results=87)"
+    }
+  ],
+  "sources": {
+    "rtl/basys3_wrapper.v": "b52195689f75983746f0b98e148df44fa5ffb898b6095a1958af8d055878785f",
+    "rtl/cnn_top.v": "7664cb6918316c202b6f4ef12e6198f241906a84a6f151616e0e2fb133d5e9a4",
+    "rtl/conv1_layer.v": "e25852e3287cbf03d592820c9e5d002795de5a14c727c5f98adb4777e21b2f38",
+    "rtl/conv2_layer.v": "c69fcb83e129c87e03af7cb7e5a6fae68939665df509ec025c187e3187d89774",
+    "rtl/conv_act.v": "a6589c768593432105fd0d01d94ab6f59897218540ccc14cc6dc5c82c440ab18",
+    "rtl/conv_pe.v": "abe91b812866e0dd494ca762397d1d81ae2401229cedfef42f0ec4c484274766",
+    "rtl/fc_layer.v": "93f408781fe526fef11c8e42aab88ae7c792a5d2dd7d5a7edb5c02cf2cf78ae4",
+    "rtl/mac_pipe.v": "2775f039ca2b310d59871c8ef44ba84cc29e1142716833ff0b15b0c114bf2fa4",
+    "rtl/mac_unit.v": "e2842653e0e128b5a78b1753021042965e2b3fb63e9aa439884f5036f618ab00",
+    "rtl/maxpool2x2.v": "1e889b42184fe3562177c7521b07515b0f1b05ee783c6f72a32500e0dcaf0356",
+    "rtl/relu_requant.v": "010e14f767d43526e1c5b370b5d72c5db6aa5addf2c098e9b3ba5afaa01487b7",
+    "rtl/rom_weights.v": "82d78e8f53c16b0f2a87ead102c303a9c4c9de16dfbc97918545bc7f43127167",
+    "rtl/seven_seg_drive.v": "0ff2dbdbb0dc21aa75bb7999b21de0ec366a6e0db853420e75e611f854385840",
+    "sim/tb_cnn.v": "94bb57c44a790af6bd38a8f7e7b835e2ae568251363bba2e3e934ab7553e05c2",
+    "sim/tb_conv1_layer.v": "2d72ecae5a5bde2a7192390d62bbfde28ae9b932a8fda8b0a89c57f1aa1451a3",
+    "sim/tb_conv2_layer.v": "61fa388f5c916638c0f71c252f2aea8b1f94380722e952bed67913ba79d3dfb6",
+    "sim/tb_fc_layer.v": "4e3745259b4127abac5bcc8d623f740c7be687c62a88ba55a397ea996993f950",
+    "sim/unit/gen_vectors.py": "893d5547a6502900c3d8ecf3666fed748ee60e18398e7131171bf6b3814e5b2b",
+    "sim/unit/tb_conv_pe.v": "17926ece8bc306aa14e312a2f6a9290a768b9e7864c76e5200e11cfe4a439c87",
+    "sim/unit/tb_conv_relu_golden.v": "8df9da1799a9a540758af3868d52675d8b7ba7d841ed5040575dcb50d4863bc7",
+    "sim/unit/tb_relu_requant.v": "f9867f27510bc8ecf24686b9b910a182fad7e43e12a41151775dc4d6696bb232",
+    "sim/unit_vectors/conv36_b.mem": "e1f279c181ca8b06ca3202f4536566ba8d93d89c2a966d832e928de8d2e95651",
+    "sim/unit_vectors/conv36_exp.mem": "18c82e684f46b3b0c03474e605aaaf9a39e6cd130f3f7f1f18bc470570c095e1",
+    "sim/unit_vectors/conv36_pix.mem": "de37f8c7ce94251938372a9e024d6986c5692b2f58fbce0853c1e252c695e2ef",
+    "sim/unit_vectors/conv36_w.mem": "5928a785db3e2dc9d5adc60179905e86a46f82d3f48abb00189ef44dff04fcb7",
+    "sim/unit_vectors/conv9_b.mem": "73dd74caad21eea892fdd15a9f7de8d90188a2ca0a3ec512d0c50480aac5851d",
+    "sim/unit_vectors/conv9_exp.mem": "fa2371b470549be18eabd808f024314482cafef283cacaa7d53f9927923e28a1",
+    "sim/unit_vectors/conv9_pix.mem": "7f74d06bc260eac8ee7c5cfa5354c70b5a8bae5efd1d322e5b3f922efb6f509a",
+    "sim/unit_vectors/conv9_w.mem": "d3c0da853d5d2644df962eb6b990f39aeb197cd5f21f313eba8fc16a47ae7063",
+    "sim/unit_vectors/relu_s10_exp.mem": "10865ab5536f4061dfe97717c8ace55c38c6a1c0a9297c803c8c4bdd670d27ca",
+    "sim/unit_vectors/relu_s10_in.mem": "0366a1078f9a51bfd521c706ce9153e981d27cef1c6a9f8a6336fed2631a3f73",
+    "sim/unit_vectors/relu_s7_exp.mem": "1ca3c4d78e06b3f317df2e0e0b1c6f36325461cce4a7d1fee689c365ccf63a21",
+    "sim/unit_vectors/relu_s7_in.mem": "6e631358e9dfbda9e6efa4259353e9eef6701816722aa087f8b4adbe85915c06",
+    "rtl/legacy/cnn_top_original_buggy.v": "3429c42087d5c8c12e4d2a640a94ebe28519ab9456ed398f4ca8c038d624e591",
+    "ml/export/conv1_b.mem": "9ab27e5ab53fa116b456a2238c184295e83ddbb3051e3ecd46b174d5b19b8f5d",
+    "ml/export/conv1_w.mem": "6f24cd593462abf348f071a88cb823e9446c9429346ec36b0d1fec113724c1fb",
+    "ml/export/conv2_b.mem": "af65d982c0a19226061b9b53d380cfd92c55ad884428e8684f8eb909aaa2b650",
+    "ml/export/conv2_w.mem": "9f7d39825bffb0ddefdd507c97ec9f634049bbbda7daaa6c7271c1a2ec57d960",
+    "ml/export/expected.txt": "c4a7198c4e27d393c3ea4df763d5b429be1ac218d88b9785c35a2a57ec8fa2d7",
+    "ml/export/expected_a1.mem": "9f16273d5990b9961a0c55d0d1dc360b928bf2e2e82e4f213091f699a2844469",
+    "ml/export/expected_a2.mem": "3d7449b25f6f779aa781f79ecd5a9dd14aa2f7bd0e9e566aa988d5ff14bcccca",
+    "ml/export/fc_b.mem": "991522ff233ea900cbdd82395a0fba37351d0fcbf24f1506777877ba87e43b96",
+    "ml/export/fc_w.mem": "482cb1568c8f18a3c51ecd55bcff8669fb6c9be550765d61a390adb2e714ac7b",
+    "ml/export/images.mem": "cbd6eddcad1f1d9cbfba11fb767359004d795b2ee15c32cdf5e1e250e64c437a",
+    "ml/export/params.txt": "e07ac2a8f4ee207827bf87685ff1f646fcd5b78f17bf7aea1a77aa4b1a2af5c8",
+    "integration/mem/biases.mem": "d0634b2b8378ac88892be1c598fe3ee56f72acd07cee937391c1f060a2273266",
+    "integration/mem/images.mem": "cbd6eddcad1f1d9cbfba11fb767359004d795b2ee15c32cdf5e1e250e64c437a",
+    "integration/mem/labels.mem": "da1a8680754ad328b8002cd5a9ef075a78201afebe975ffcbb557b3aa8ae207c",
+    "integration/mem/seq.mem": "334a1061e6d490ff99fe68ceeab7cd084ffa78700ae422bc6214ef8b11d076b9",
+    "integration/mem/stub_logits.mem": "9da6111071e58fda10673704c122e66bcf45e3d228c2dbb14d7ce3de3a2cb765",
+    "integration/mem/weights.mem": "3b34198331ea19f7674f5a2c76c7584016e029e8365617497bb14d4cfe47c606",
+    "integration/rtl/alert_control.v": "2cbf82f8dadc6ac8fcd3cac178422ce643c9aa002e0094a8bde0b70848c2a371",
+    "integration/rtl/cnn_control.v": "6e1f2bb46b972d688bb800d71779b1e15e0ddef7c7ef54e93130273e0ddc3389",
+    "integration/rtl/cnn_core_stub.v": "eebc617280824cd469462c2c94df043ca4b8b3e3114dcd550cb4f1a50ceac8c2",
+    "integration/rtl/drowsiness_top.v": "5a52ab22b254e71d4aa3cb5e545be215a4f37900d7d07fe2008ff6354a7ac596",
+    "integration/rtl/drowsy_fsm.v": "dfe60d5c160b58740d83be8ae77a50f34a9f333e769965bb29162a95abd35305",
+    "integration/rtl/image_rom.v": "c5bfaf09ac58c81fb317454a871ee6632b8581b152bc860781f8c39295d9e01f",
+    "integration/rtl/input_control.v": "cb94aa7654476ef0894e6c7fef21705fbe425498b36ba7a34ae0586d4adea5f0",
+    "integration/rtl/model_params.vh": "7d4a8931f77b69f55698814a578898d49abbb683a2ce3c402bdf9c7c991979ab",
+    "integration/rtl/uart_ascii_tx.v": "fcc00171761264a85fcffdac44e0f375f38681c1a73821edb2c4638c20d7af7a",
+    "integration/rtl/uart_command.v": "751f118aca6b0b1e5d75d22d0e8be7cac352679e37f595a5c3d0e28c887787ae",
+    "integration/rtl/uart_image_rx.v": "f7aa2631938cee1796fed60006d6bfb7cb8726d297eca9d997c0140efa128163",
+    "integration/rtl/uart_monitor.v": "fcaef14f73e70825552f78f03320be55b7a9b143f8d37abd796bd6574c541795",
+    "integration/rtl/uart_rx.v": "5be46786adbb844a174de0a829c728d2bf1b6c758a7f5f2970805a7121a01886",
+    "integration/rtl/uart_tx.v": "7c713a7406b4b9b9949b9aeeeac33d29eea8efdb869518821d3a07a8abfccd3f",
+    "integration/rtl/weight_bias_rom.v": "4acd996f91985901e48acaf10c6f5f09b4900c540f06e63561bd3e25a913e758",
+    "integration/scripts/drowsy_ref.py": "1d2127d5d9390680da3c681fb0bea62a6105d69c0ca8523bf72c39cb7ffc1a83",
+    "integration/scripts/gen_sim_data.py": "aa8a97f9e391ec8a2e41a9dabed800a6ea5a066ec6dd164d955bca7570e794fd",
+    "integration/scripts/gen_upload_vectors.py": "226ed93305eb2d8980c4046944d06087e26cc87756b7dc13e13af5e39d4b3c4f",
+    "integration/scripts/requirements-test.txt": "b278f1339f69781eefd2f8fc58f11e4c07a5fbd9134324562c8c0f65599b34c5",
+    "integration/scripts/verify_uart.py": "1e1f68c1c48b23bc065e6795828ef1628a30549ed264b2f7576ae033faa4b3d9",
+    "integration/sim/conv1_b.mem": "9ab27e5ab53fa116b456a2238c184295e83ddbb3051e3ecd46b174d5b19b8f5d",
+    "integration/sim/conv1_w.mem": "6f24cd593462abf348f071a88cb823e9446c9429346ec36b0d1fec113724c1fb",
+    "integration/sim/conv2_b.mem": "af65d982c0a19226061b9b53d380cfd92c55ad884428e8684f8eb909aaa2b650",
+    "integration/sim/conv2_w.mem": "9f7d39825bffb0ddefdd507c97ec9f634049bbbda7daaa6c7271c1a2ec57d960",
+    "integration/sim/fc_b.mem": "991522ff233ea900cbdd82395a0fba37351d0fcbf24f1506777877ba87e43b96",
+    "integration/sim/fc_w.mem": "482cb1568c8f18a3c51ecd55bcff8669fb6c9be550765d61a390adb2e714ac7b",
+    "integration/sim/images.mem": "cbd6eddcad1f1d9cbfba11fb767359004d795b2ee15c32cdf5e1e250e64c437a",
+    "integration/sim/run.sh": "58ce6159e57490119bc718c05adca87d2dba1d5a7e414c62840663134c39b62c",
+    "integration/sim/tb_alert_control.v": "8d99da4e0272162155953beb58877324cbca26ab3645f13883e8a02105e19476",
+    "integration/sim/tb_cnn_control.v": "07a8895dbe5ad566c537afd8c196982b1f376101d2ded24d89028a4d5c7579d7",
+    "integration/sim/tb_drowsy_fsm.v": "2cbfe6c8b08a0fedcdb404b27bdc7b1eecd8618d1b921dcafb75e294eb776483",
+    "integration/sim/tb_input_control.v": "08b5538d29e54fbcc6fdabd0c0740b5d16a47d9b083bba0df0af357550839bf2",
+    "integration/sim/tb_paths.vh": "0d7f06b51981e37036017bc1040a7c8a760d95d3ba68dd690134b8ac666420b5",
+    "integration/sim/tb_roms.v": "359cfbc6c40c44e0fdb18aa13bcd08396622ad89ab8a07d32d643fa6e028efa4",
+    "integration/sim/tb_top.v": "178d91a27dd40deb964d34ad3b7db0abdf811ed7f96a92befe33ddc3e4d55955",
+    "integration/sim/tb_top_real.v": "bdcc3083c9a1a0fdf93780fa8f5646a7f83cb9150fab19f32f63f07438f27a80",
+    "integration/sim/tb_uart_command.v": "70bce8ef1b51dc93ac3284e0451142167806884d15286a0ed46aac4ed7ec8b92",
+    "integration/sim/tb_uart_format.v": "0ec5ac8cfa7aa8ba2d517f862a221f29622ea30180d7fd7656f14d60fb323a9c",
+    "integration/sim/tb_uart_latency.v": "dd5db13f3e38c1dc1dc33aebefa24efa2b5e72cd42a97d85c1ecf6c6f27fdd97",
+    "integration/sim/tb_uart_phy.v": "8e7a2494920ebdd8c712f8469ee1d5ad0ba652dbb479e46bfb7e6dacaacbd978",
+    "integration/sim/tb_uart_system.v": "62b2aee80c6857d4f88da37307f765bf2f915a37f2d9a235811fee933458a4ca",
+    "integration/sim/tb_uart_upload.v": "f3a0e613f0398147413f24ec54086557aa35e74854a336f0ac084d615b9397d8",
+    "integration/sim/vectors/drowsy_trace.mem": "2302a909410382f89a2298e0eacf1bc682a5dea41c796d742b6daeb5e30e8ef9",
+    "integration/sim/vectors/expected.txt": "c4a7198c4e27d393c3ea4df763d5b429be1ac218d88b9785c35a2a57ec8fa2d7",
+    "integration/sim/vectors/expected_a1.mem": "9f16273d5990b9961a0c55d0d1dc360b928bf2e2e82e4f213091f699a2844469",
+    "integration/sim/vectors/expected_a2.mem": "3d7449b25f6f779aa781f79ecd5a9dd14aa2f7bd0e9e566aa988d5ff14bcccca",
+    "integration/sim/vectors/seq_expected.mem": "8ec91fbd88a6c3d9a94bd9a76093380e51af0e35a4cd5e499fb91a4812fbdd86",
+    "integration/sim/vectors/slot_sum.mem": "6b898cc738571f47fee4349817294f4e4ef5551dfa0285618282b8cfd545a30d",
+    "integration/sim/vectors/upload_crc.mem": "78ce3a4e7a548e45aab1910d379ff35c913e70986fd164ec463c9c13e7ae5677",
+    "integration/sim/vectors/upload_logits.mem": "4cb2c2e4c4f598c513b9e60736b899a48ede50bdc93205f00c42799dc5f04e58",
+    "integration/sim/vectors/upload_pixels.mem": "85b509c0e423c38db76aab82bf7c2ee281a9e48400d176c93151c6bf447b3edc",
+    "integration/sim/vectors/upload_warnings.mem": "ce9b5c6fbd2076be2e0d2baa341386168d3484bd83855b22e12e9b8325b7997f",
+    "integration/scripts/__pycache__/drowsy_ref.cpython-314.pyc": "30ed9ccc5099deb5dfda693a9e08299cd6517e9d97396a7abe3021899e2dec74",
+    "integration/scripts/__pycache__/gen_sim_data.cpython-314.pyc": "114e9f0c79f8be7cd41ae6818762bca0cbd7fdd6ced24b4e3f5bd43b31d930df"
+  }
+}

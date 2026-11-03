@@ -1,0 +1,3 @@
+Time resolution is 1 ps
+PASS tb_uart_system (16 PC slots, BOARD/SEQ telemetry, golden/temporal oracle, low-confidence hold, busy, mode, errors, overrun, reset; results=87)
+$finish called at time : 92360040 ns : File "C:/Karan/Program_KCCI/Training_Technical/Project_Modul_3_FPGA/build/verify_20261103_150201_623703/source/integration/sim/tb_uart_system.v" Line 169

@@ -1,0 +1,57 @@
+{
+  "evidence_source": "User-supplied COM6 output normalized into records; reset as instructed, not independently observed",
+  "records": [
+    {
+      "frame_id": 4,
+      "warning": "AWAKE",
+      "reference_match": true
+    },
+    {
+      "frame_id": 5,
+      "warning": "AWAKE",
+      "reference_match": true
+    },
+    {
+      "frame_id": 6,
+      "warning": "AWAKE",
+      "reference_match": true
+    },
+    {
+      "frame_id": 7,
+      "warning": "AWAKE",
+      "reference_match": true
+    },
+    {
+      "frame_id": 8,
+      "warning": "AWAKE",
+      "reference_match": true
+    },
+    {
+      "frame_id": 9,
+      "warning": "AWAKE",
+      "reference_match": true
+    },
+    {
+      "frame_id": 10,
+      "warning": "AWAKE",
+      "reference_match": true
+    },
+    {
+      "frame_id": 11,
+      "warning": "MICROSLEEP",
+      "reference_match": true
+    }
+  ],
+  "recovery_expected_transitions": [
+    {
+      "open_observation": 10,
+      "frame_id": 21,
+      "warning": "DROWSY"
+    },
+    {
+      "open_observation": 26,
+      "frame_id": 37,
+      "warning": "AWAKE"
+    }
+  ]
+}

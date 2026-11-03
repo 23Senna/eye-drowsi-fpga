@@ -1,0 +1,43 @@
+test_errors_do_not_retry (test_uart_cli.HostTests.test_errors_do_not_retry) ... ok
+test_partial_line_timeout_keeps_buffer (test_uart_cli.HostTests.test_partial_line_timeout_keeps_buffer) ... ok
+test_run_and_interleaved_monitoring (test_uart_cli.HostTests.test_run_and_interleaved_monitoring) ... ok
+test_timeout_does_not_repeat_run (test_uart_cli.HostTests.test_timeout_does_not_repeat_run) ... ok
+test_validation (test_uart_cli.HostTests.test_validation) ... ok
+test_binary_upload_crc_partial_writes_and_result (test_uart_upload.UploadTests.test_binary_upload_crc_partial_writes_and_result) ... ok
+test_crc_error_never_runs (test_uart_upload.UploadTests.test_crc_error_never_runs) ... ok
+test_exact_input_formats (test_uart_upload.UploadTests.test_exact_input_formats) ... ok
+test_png_pixels_and_rgb_resize (test_uart_upload.UploadTests.test_png_pixels_and_rgb_resize) ... ok
+test_result_schema_and_validation_before_write (test_uart_upload.UploadTests.test_result_schema_and_validation_before_write) ... ok
+test_timeout_never_retries (test_uart_upload.UploadTests.test_timeout_never_retries) ... ok
+test_wrong_identity_rejected (test_uart_upload.UploadTests.test_wrong_identity_rejected) ... ok
+TX LOAD 0064
+READY 100
+TX 576 pixels + deliberately incorrect CRC
+ERR CRC
+TX RUN_FRAME 0064
+ERR NOFRAME
+PASS invalid frame rejected; no RESULT observed in the checked interval
+test_crc_fault_and_no_run_acceptance (test_upload_faults_host.FaultTests.test_crc_fault_and_no_run_acceptance) ... ok
+TX LOAD 0064
+READY 100
+TX RUN_FRAME 0064
+ERR TIMEOUT
+test_timeout_is_not_accepted_as_reset (test_upload_faults_host.FaultTests.test_timeout_is_not_accepted_as_reset) ... ok
+TX LOAD 0064
+READY 100
+TX 64/576 pixels; sender stopped without closing the COM port
+ERR TIMEOUT
+TX RUN_FRAME 0064
+ERR NOFRAME
+PASS invalid frame rejected; no RESULT observed in the checked interval
+test_timeout_sends_only_partial_frame (test_upload_faults_host.FaultTests.test_timeout_sends_only_partial_frame) ... ok
+TX LOAD 0064
+READY 100
+TX 576 pixels + deliberately incorrect CRC
+test_unexpected_result_fails (test_upload_faults_host.FaultTests.test_unexpected_result_fails) ... ok
+RESULT unexpected
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.491s
+
+OK

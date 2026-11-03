@@ -1,0 +1,20 @@
+{
+  "test": "reset",
+  "port": "COM6",
+  "frame_id": 300,
+  "status": "PASS",
+  "source": "Host checker with operator-connected hardware",
+  "reset_evidence": "Manual operator action",
+  "limitation": "Serial observations only; no direct internal cnn_start instrumentation",
+  "recovery": {
+    "source": "UPLOAD",
+    "slot": 0,
+    "eye_class": "OPEN",
+    "warning": "AWAKE",
+    "logit0": -17106,
+    "logit1": 17976,
+    "cycles": 37290,
+    "us": 372,
+    "frame_id": 301
+  }
+}
