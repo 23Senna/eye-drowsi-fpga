@@ -19,7 +19,7 @@ quantize_export.py`, export of 29 Oct). It replaces v0 (16×16, one conv). Pleas
 | conv1 3×3, 4 filters | 4×22×22 | `acc = b1[f] + Σ pix·w1` (int8 weights, int32 bias) |
 | act + pool | 4×11×11 = **a1** | `clip(acc >>> 10, 0, 127)` (S1 = 10, floor shift), 2×2 max |
 | conv2 3×3, 4→8 | 8×9×9 | `acc = b2[f2] + Σ a1·w2` |
-| act + pool | 8×4×4 = **a2** (128) | `clip(acc >>> 7, 0, 127)` (S2 = 7), 2×2 max, **floor** (row/col 8 dropped) |
+| act + pool | 8×4×4 = **a2** (128) | `clip(acc >>> 6, 0, 127)` (S2 = 6), 2×2 max, **floor** (row/col 8 dropped) |
 | FC | 2 logits | `logit[c] = bf[c] + Σ a2[k]·wf[c][k]`, k = ch·16 + r·4 + c |
 
 Worst-case bounds from the exported weights: conv1 19 bit, conv2 18 bit, FC 20 bit → **24-bit signed
@@ -90,7 +90,7 @@ Drowsiness rules = `python/drowsy_ref.py`: window 32 frames, DROWSY at ≥ 13 cl
 MICROSLEEP after 8 closed in a row, ends after 10 open in a row.
 
 ## Settled by the Python export (were open in v0)
-Requant = floor shift + clip [0,127] per layer (S1 = 10, S2 = 7) · FC bias in product scale (add directly) ·
+Requant = floor shift + clip [0,127] per layer (S1 = 10, S2 = 6; fixed-point export, `ml/export/params.txt`) · FC bias in product scale (add directly) ·
 `.mem` files come from the Python owner · 16 demo slots.
 
 ## Still open (TBD)
@@ -102,7 +102,9 @@ Requant = floor shift + clip [0,127] per layer (S1 = 10, S2 = 7) · FC bias in p
 
 ## Integration with the CNN team's core (30 Oct, repo `eye-drowsi-fpga`)
 
-The team delivered `rtl/cnn_top.v` + `rtl/rom_weights.v` (sequential one-MAC, own ROMs incl. images).
+The team delivered `rtl/cnn_top.v` + `rtl/rom_weights.v` (own ROMs incl. images). Since 2 Nov the core is
+pipelined (`conv1_layer` / `conv2_layer` / `fc_layer` + `mac_pipe`, synchronous buffer reads) and the export is fixed point
+(S1 = 10, S2 = 6).
 `drowsiness_top` instantiates it directly (stub only with `USE_STUB`); their files are used from their repo, not copied.
 
 | cnn_top port | Use in drowsiness_top |
@@ -115,7 +117,7 @@ The team delivered `rtl/cnn_top.v` + `rtl/rom_weights.v` (sequential one-MAC, ow
 | `logit0/1 [31:0]` | low-confidence check (32-bit in drowsy_fsm) |
 
 Verified: `sim/tb_top_real.v` — all 16 slots bit-exact vs the golden logits, 64 sequence frames vs `drowsy_ref`.
-Latency 75,826 cycles. Vivado at 100 MHz: WNS −6.58 ns (path inside `cnn_top`: `kr2` → `a1_idx` → `a1_mem` mux →
-multiply → `acc2`, 23 levels) → system clock lowered to 50 MHz with an MMCM (`CLK_MHZ` in `drowsiness_top`).
-Request to the CNN team: register the `a1_mem` / `img_mem` read (or the product) before the accumulate so the core
-meets 100 MHz. `rtl/cnn_control.v` (BRAM-friendly, 1 MAC/cycle, 36,124 cycles) stays available as a reference.
+Latency 37,290 cycles = 372.9 µs (SW15 shows `0372`). The 100 MHz board clock is used directly (`CLK_MHZ = 100`,
+no MMCM): WNS +2.385 ns, WHS +0.091 ns, 601 LUT / 700 FF / 6.5 BRAM / 3 DSP (2 Nov build, without UART).
+History: the first sequential one-MAC core needed 75,826 cycles and failed 100 MHz (WNS −6.58 ns), so it ran at 50 MHz
+through an MMCM; `CLK_MHZ = 50` still selects that path. `rtl/cnn_control.v` (BRAM-friendly, 1 MAC/cycle, 36,124 cycles) stays available as a reference.

@@ -20,9 +20,11 @@ Outputs (padded to 16 slots when the export has fewer images):
   sim/vectors/expected*         copies of the export's golden files (for the testbenches)
   sim/*.mem                     copies of the export's 7 ROM files (cnn_top/rom_weights read them by bare name)
 The integer model below re-implements quantize_export.forward() and must match expected*.
+It also stops if the relu_requant SHIFT in the team's rtl/conv1_layer.v / conv2_layer.v differs from S1 / S2.
 Run from anywhere: py -3.11 scripts/gen_sim_data.py
 """
 import os
+import re
 import shutil
 import sys
 
@@ -38,6 +40,8 @@ MEM, VEC = os.path.join(FPGA, "mem"), os.path.join(FPGA, "sim", "vectors")
 _IN_REPO = os.path.join(FPGA, "..", "ml", "export")
 EXP = os.environ.get("TEAM_EXPORT", _IN_REPO if os.path.isdir(_IN_REPO)
                      else os.path.join(FPGA, "..", "eye-drowsi-fpga", "ml", "export"))
+# team RTL: <export>/../../rtl (same default as sim/run.sh, override with env TEAM_RTL)
+TEAM_RTL = os.environ.get("TEAM_RTL", os.path.join(EXP, "..", "..", "rtl"))
 ROM_FILES = ("conv1_w", "conv1_b", "conv2_w", "conv2_b", "fc_w", "fc_b", "images")
 SLOTS, IMG, PAD = 16, 24, 1024     # hardware: 16 slots x 1024 words, 24x24 input
 
@@ -71,9 +75,24 @@ def pool(x):
     return x[:, :2 * h, :2 * w].reshape(C, h, 2, w, 2).max(axis=(2, 4))
 
 
+def check_rtl_shift(layer, s):
+    """The requant shift is hard-coded in the team's conv layers: stop loudly if it differs from params.txt."""
+    path = os.path.join(TEAM_RTL, layer + ".v")
+    if not os.path.isfile(path):
+        sys.exit(f"ERROR: {path} not found (set TEAM_RTL) - cannot check SHIFT against params.txt")
+    m = re.search(r"relu_requant\s*#\s*\([^;]*?\.SHIFT\s*\(\s*(\d+)\s*\)", open(path).read())
+    if not m:
+        sys.exit(f"ERROR: no relu_requant #(.SHIFT(n)) in {path} - update check_rtl_shift() in gen_sim_data.py")
+    if int(m.group(1)) != s:
+        sys.exit(f"ERROR: {layer}.v relu_requant SHIFT = {m.group(1)} but params.txt says {s} - the export and "
+                 f"the RTL disagree: fix SHIFT in {path} (or re-export)")
+
+
 def main():
     p = dict(l.strip().split("=") for l in open(os.path.join(EXP, "params.txt")) if "=" in l)
     S1, S2 = int(p["S1"]), int(p["S2"])
+    check_rtl_shift("conv1_layer", S1)
+    check_rtl_shift("conv2_layer", S2)
     w1, b1, w2, b2, wf, bf = (read_mem(os.path.join(EXP, n + ".mem"), 8 if n.endswith("_w") else 32)
                               for n in ("conv1_w", "conv1_b", "conv2_w", "conv2_b", "fc_w", "fc_b"))
     # the RTL (cnn_control, ROM maps) is built for this network: stop loudly if the export changed shape

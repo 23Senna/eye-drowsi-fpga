@@ -38,38 +38,42 @@ The 16 demo images are chosen by `quantize_export.py`: the first two are the mod
 basys3_wrapper ── btnR → rising-edge → start
       │          btnC → async reset
       │          SW[3:0] → img_base_addr = SW × 1024
-      └── cnn_top ── sequential FSM, one MAC
+      └── cnn_top ── sequencing FSM + img/a1/a2 buffers (synchronous reads)
             ├── LOAD  (576 px → img_mem)
-            ├── CONV1 (Conv1 + ReLU + pool → a1_mem)
-            ├── CONV2 (Conv2 + ReLU + pool → a2_mem)
-            └── FC    (FC + argmax → logits/prediction)
+            ├── conv1_layer (mac_pipe + relu_requant S1 + maxpool2x2 → a1_mem)
+            ├── conv2_layer (mac_pipe + relu_requant S2 + maxpool2x2 → a2_mem)
+            └── fc_layer    (mac_pipe, FC + argmax → logits/prediction)
       └── seven_seg_drive ── "----" while busy, "OPN " / "CLSD" when done
 ```
 
-* The active RTL uses one multiply-accumulate datapath sequentially. A
-  convolution tap is processed over multiple clocks; the same MAC is reused
-  for every output position, filter, and layer.
+* Each layer has its own pipelined multiply-accumulate (`mac_pipe`), reused
+  for every output position and filter of that layer; the layers run one after
+  the other (37,290 cycles per image, 373 µs at 100 MHz).
 * `rom_weights.v` reads the exported `.mem` files through synchronous ROM
   ports. The layer buffers are written one value at a time instead of being
   transferred as large packed vectors.
-* This organization trades latency for lower parallel logic and is the
-  intended baseline for Basys 3 resource usage. Vivado synthesis is still
-  required to confirm BRAM/LUT/FF inference.
+* The img / a1 / a2 buffers are read synchronously (one clock after the
+  address), so Vivado maps them to block RAM and the core meets 100 MHz:
+  WNS +2.385 ns, 601 LUT / 700 FF / 6.5 BRAM / 3 DSP for the whole
+  `integration/` board top (Vivado 2025.2.1, 2 Nov).
 * `cnn_top` ports: `clk, rst (async, active-high), start, img_base_addr[13:0] → done, prediction, logit0, logit1 (signed 32)`.
 * Weight ROMs are **synchronous-read**: data appears one clock after the address. This is exactly what the original design got wrong — see below.
 
-## 4. Sequential one-MAC implementation
+## 4. Pipelined layer implementation
 
-`cnn_top.v` is intentionally a sequential engine rather than a fully
-unrolled behavioral network. It requests one ROM value, performs one MAC, and
-advances its counters. This prevents the nested convolution loops from
-becoming hundreds of parallel multipliers during synthesis. The old buggy
-implementation remains in `rtl/legacy/cnn_top_original_buggy.v` for history.
+`cnn_top.v` is a structural top: it loads the image, owns the three buffers
+and starts `conv1_layer`, `conv2_layer` and `fc_layer` in turn. Each layer
+pipelines address generation, the synchronous buffer/ROM read and the MAC
+(`mac_pipe`), so one tap is accumulated per clock without hundreds of
+parallel multipliers. The requant shift is a parameter of each layer's
+`relu_requant` and must equal `S1` / `S2` in `ml/export/params.txt`
+(`integration/scripts/gen_sim_data.py` checks this). The earlier sequential
+one-MAC `cnn_top` (75,826 cycles, 50 MHz only) is in git history; the original
+buggy version stays in `rtl/legacy/cnn_top_original_buggy.v`.
 
 ## 5. Stand-alone pipelined blocks
 
-`conv_pe.v` (parameter `NTAPS` 9 or 36, 2-clock latency, throughput 1 output per clock) and `relu_requant.v` (parameter `SHIFT`) were written as a faster, testable replacement for the sequential datapath. They pass their unit tests (`sim/unit/`) but `cnn_top.v` does not instantiate them. `conv_act.v` and `maxpool2x2.v` are older helper modules that nothing instantiates.
-
-These pipelined blocks remain available for a later resource- and
-timing-oriented implementation; they are not instantiated by the current
-one-MAC baseline.
+`relu_requant.v` (parameter `SHIFT`) and `maxpool2x2.v` are used inside
+`conv1_layer` / `conv2_layer`. `conv_pe.v` (parameter `NTAPS` 9 or 36, 2-clock
+latency, throughput 1 output per clock) passes its unit tests (`sim/unit/`)
+but is not instantiated; `conv_act.v` and `mac_unit.v` are unused helpers.

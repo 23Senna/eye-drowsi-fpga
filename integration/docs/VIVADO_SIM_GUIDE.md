@@ -10,14 +10,14 @@ All 6 PASS (30 Oct).
 1. Open Vivado from the Start menu → **Open Project** → your `.xpr`.
 2. Left panel (Flow Navigator) → **SIMULATION → Run Simulation → Run Behavioral Simulation**.
    Compile + elaborate takes ~1 min, then it runs to the end by itself (`runtime = -all`).
-   `tb_top_real` simulates **76.92 ms**, which takes a few minutes of real time.
+   `tb_top_real` simulates **70.37 ms**, which takes a few minutes of real time.
 3. When it stops, look at the **Tcl Console** (bottom). Expected lines:
    ```
-   manual: 16 slots checked, 0 errors; cnn_top latency 75826 cycles (758 us)
+   manual: 16 slots checked, 0 errors; cnn_top latency 37290 cycles (372 us)
    sequence: 64 frames checked (13 in MICROSLEEP), 0 errors total
    scan: 16 frames checked, 0 errors total
-   PASS tb_top_real (cnn_top: 16 slots bit-exact, latency 75826 cycles)
-   $finish called at time : 76919670 ns
+   PASS tb_top_real (cnn_top: 16 slots bit-exact, latency 37290 cycles)
+   $finish called at time : 70368550 ns
    ```
    The testbench checks everything itself: if the last line says **PASS**, the design is correct.
    `FAIL ... @n` lines name the check and the slot / frame number.
@@ -43,7 +43,7 @@ run all
 (Or with the mouse: **Scope** panel → expand `tb_top_real` → click `dut` → **Objects** panel → select signals →
 right-click → *Add to Wave Window*; then toolbar **Restart** (⟲) and **Run All** (▶).)
 
-Do **not** add signals inside `dut/u_core` (the CNN): they change every cycle for 77 ms and the waveform file gets huge.
+Do **not** add signals inside `dut/u_core` (the CNN): they change every cycle for 70 ms and the waveform file gets huge.
 
 Tips: **Zoom Fit** shows the whole run; `frame_done` / `cnn_start` are 1-cycle pulses, invisible when zoomed out:
 select the signal and use **Go to Next Transition** (toolbar arrow) to jump between them.
@@ -55,53 +55,55 @@ LEDs `[3:0]` slot, `[4]` busy, `[5]` eye closed, `[6]` sequence mode, `[13:7]` P
 
 | Time | Part | What to look at |
 |---|---|---|
-| 0 – 0.4 µs | reset | `btnU` = 1 for 10 cycles |
-| 0.6 µs → 12.16 ms | **1. manual mode** | `sw[3:0]` = 0..15, one `btnC` press each; `cnn_start` → 758.26 µs later `cnn_done` / `frame_done` |
-| 12.16 – 12.2 ms | **2. latency view** | `sw[15]` = 1, display shows `0758` (µs); `latency` = 75826 |
-| 12.2 → 64.12 ms | **3. sequence mode** | `sw[14]` = 1, one frame every 0.8 ms (64 frames, slots from `seq.mem`) |
-| 64.12 → 76.92 ms | **4. scan mode** | `sw[10]` = 1 too, slots 0..15 in order, results = manual mode |
-| 76.92 ms | end | `$finish`, PASS line |
+| 0 – 0.1 µs | reset | `btnU` = 1 for 10 cycles |
+| 0.7 µs → 5.99 ms | **1. manual mode** | `sw[3:0]` = 0..15, one `btnC` press each; `cnn_start` → 372.9 µs later `cnn_done` / `frame_done` |
+| 5.993 – 5.994 ms | **2. latency view** | `sw[15]` = 1, display shows `0372` (µs); `latency` = 37290 |
+| 5.994 → 57.57 ms | **3. sequence mode** | `sw[14]` = 1, one frame every 0.8 ms (64 frames, slots from `seq.mem`) |
+| 57.57 → 70.37 ms | **4. scan mode** | `sw[10]` = 1 too, slots 0..15 in order, results = manual mode |
+| 70.37 ms | end | `$finish`, PASS line |
 
-### Part 1: one frame per slot (`frame_done` at 0.759 ms + n × 0.760 ms)
+### Part 1: one frame per slot (`frame_done` at 0.374 ms + n × 0.3745 ms)
 
-`latency` is always **75826 cycles** (= 758 µs at 100 MHz in simulation, 1.52 ms on the board at 50 MHz).
-`eye_state` = 1 when logit0 ≥ logit1. Values = Python golden:
+`latency` is always **37290 cycles** (= 372.9 µs at 100 MHz, in simulation and on the board; the display shows `0372`).
+`eye_state` = 1 when logit0 ≥ logit1. Values = Python golden (fixed-point export, S2 = 6); slots 0 and 1 are the
+model's two misclassified test images (closed image → open, open image → closed):
 
 | slot | frame_done (ms) | logit0 | logit1 | eye_state |
 |---|---|---|---|---|
-| 0 | 0.759 | 1326 | −363 | 1 closed |
-| 1 | 1.519 | −632 | 3752 | 0 open |
-| 2 | 2.279 | 7202 | −5075 | 1 |
-| 3 | 3.039 | −6948 | 11172 | 0 |
-| 4 | 3.798 | 18436 | −13446 | 1 |
-| 5 | 4.558 | −4666 | 9184 | 0 |
-| 6 | 5.318 | 9806 | −7346 | 1 |
-| 7 | 6.078 | −8355 | 13050 | 0 |
-| 8 | 6.838 | 18753 | −13755 | 1 |
-| 9 | 7.598 | −8922 | 13489 | 0 |
-| 10 | 8.358 | 5870 | −3755 | 1 |
-| 11 | 9.118 | −7031 | 11731 | 0 |
-| 12 | 9.877 | 6332 | −3047 | 1 |
-| 13 | 10.637 | −8669 | 13583 | 0 |
-| 14 | 11.397 | 12106 | −9431 | 1 |
-| 15 | 12.157 | −11941 | 15673 | 0 |
+| 0 | 0.374 | 492 | 727 | 0 open |
+| 1 | 0.748 | 828 | −1330 | 1 closed |
+| 2 | 1.123 | 11912 | −12193 | 1 |
+| 3 | 1.497 | −17106 | 17976 | 0 |
+| 4 | 1.872 | 27235 | −25224 | 1 |
+| 5 | 2.246 | −8710 | 10636 | 0 |
+| 6 | 2.621 | 15108 | −15060 | 1 |
+| 7 | 2.995 | −14964 | 16429 | 0 |
+| 8 | 3.370 | 26956 | −25062 | 1 |
+| 9 | 3.744 | −16890 | 18298 | 0 |
+| 10 | 4.119 | 7759 | −7738 | 1 |
+| 11 | 4.493 | −10288 | 12299 | 0 |
+| 12 | 4.868 | 12267 | −11171 | 1 |
+| 13 | 5.242 | −14681 | 16314 | 0 |
+| 14 | 5.617 | 16936 | −16313 | 1 |
+| 15 | 5.991 | −20662 | 21904 | 0 |
 
 ### Part 3: drowsiness states (the interesting part for the demo)
 
-First frame at 13.72 ms, then every 0.8 ms. Watch `closed_count` (closed frames in the last 32), `closed_run`
+First frame at 7.17 ms, then every 0.8 ms. Watch `closed_count` (closed frames in the last 32), `closed_run`
 (closed frames in a row) and `drowsy_state`:
 
 | Time (ms) | Event | Rule |
 |---|---|---|
-| 13.72 – 41.0 | AWAKE (`drowsy_state` 0), `closed_count` slowly rises | |
-| **41.72** | → **DROWSY** (1), `led[14]` on, display `tirE` | `closed_count` reaches 13 |
-| **50.52** | → **MICROSLEEP** (2), `led[15]` blinks, display `SLEP` | `closed_run` reaches 8 |
-| 52.92 | longest closed run = 11 | |
-| **60.92** | → back to **DROWSY** (1) | 10 open frames in a row |
-| 64.12 | end of sequence (state stays DROWSY through part 4) | |
+| 7.17 – 34.37 | AWAKE (`drowsy_state` 0), `closed_count` slowly rises | |
+| **35.17** | → **DROWSY** (1), `led[14]` on, display `tirE` | `closed_count` reaches 13 |
+| **43.97** | → **MICROSLEEP** (2), `led[15]` blinks, display `SLEP` | `closed_run` reaches 8 |
+| 46.37 | longest closed run = 11 | |
+| **54.37** | → back to **DROWSY** (1) | 10 open frames in a row |
+| 57.57 | end of sequence (state stays DROWSY through part 4) | |
 
 ### Part 4: scan
-`img_slot` 0, 1, …, 15 at 64.92, 65.72, … 76.92 ms; `eye_state` alternates 1, 0, 1, 0 … exactly as in part 1.
+`img_slot` 0, 1, …, 15 at 57.99, 58.79, … 69.99 ms (`cnn_start`; `frame_done` 0.373 ms later, the last at 70.37 ms);
+`eye_state` 0, 1, 1, 0, 1, 0 … exactly as in part 1.
 
 ## 4. The other testbenches
 
