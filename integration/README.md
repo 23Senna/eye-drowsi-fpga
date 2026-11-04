@@ -43,6 +43,7 @@ SW9 selects board (down) or PC (up) control. UART sends results from every mode.
 See [UART protocol and demo](docs/UART.md) and [executed verification](docs/UART_VERIFICATION.md).
 Use `python integration/scripts/verify_uart.py` for the full working-tree simulation regression.
 The real CNN also accepts new 24x24 eye crops over UART: see [image upload](docs/IMAGE_UPLOAD.md).
+A buzzer on Pmod JA1 sounds the DROWSY / MICROSLEEP alarm: see [buzzer](docs/BUZZER.md).
 
 ## Board controls
 

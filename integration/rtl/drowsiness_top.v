@@ -32,7 +32,8 @@ module drowsiness_top #(
     output wire [15:0] led,
     output wire [6:0]  seg,
     output wire        dp,
-    output wire [3:0]  an
+    output wire [3:0]  an,
+    output wire        buzzer_n       // Pmod JA1 -> MH-FMD buzzer module I/O (active low)
 );
     // ---- system clock ----
     wire sys_clk, locked;
@@ -149,6 +150,11 @@ module drowsiness_top #(
         assign launch_ready=1'b1;
         assign serial_quiescent=1'b1;
     end endgenerate
+
+    // SW8 mute, SW7 active-buzzer module, SW6 test tone (switches not used by input_control)
+    buzzer_control #(.CLK_MHZ(CLK_MHZ)) u_buzzer (
+        .clk(sys_clk), .rst(rst), .drowsy_state(drowsy_state),
+        .sw_mute(sw[8]), .sw_active(sw[7]), .sw_test(sw[6]), .buzzer_n(buzzer_n));
 
     alert_control #(.REFRESH_BITS(REFRESH_BITS), .BLINK_BITS(BLINK_BITS)) u_alert (
         .clk(sys_clk), .rst(rst), .have_result(have_result), .eye_state(eye_state),

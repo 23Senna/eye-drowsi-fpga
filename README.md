@@ -83,7 +83,7 @@ and hardware details.
 The integration top supports 115200 8N1 UART, SW9 board/PC ownership, SLOT/RUN commands
 and RESULT telemetry from manual and sequence modes. It also accepts 576-byte
 binary image uploads with CRC and frame IDs, retaining ROM mode.
-See [image upload](integration/docs/IMAGE_UPLOAD.md), [UART usage](integration/docs/UART.md)
+See [buzzer alarm](integration/docs/BUZZER.md), [image upload](integration/docs/IMAGE_UPLOAD.md), [UART usage](integration/docs/UART.md)
 and [verification record](integration/docs/UART_VERIFICATION.md).
 
 ## Windows GUI
@@ -280,8 +280,8 @@ Roles summarised from the daily progress reports (29 Oct – 3 Nov 2026).
 | Member | Role |
 |---|---|
 | Michael Reynaldi Tamara ("Reyn") | ML model: dataset, training, int8/fixed-point export; live camera input (OpenCV) |
-| Handy Jonarta | CNN core architecture (parallel layers, 100 MHz) and block diagrams |
-| Nabil Karim Abdurrahman | CNN core layers + layer testbenches; slides and GitHub |
+| Handy Jonarta | CNN core architecture (parallel layers, 100 MHz), CNN core layers + layer testbenches (with Nabil), block diagrams |
+| Nabil Karim Abdurrahman | CNN core layers + layer testbenches (with Handy), GitHub |
 | Karunia Muda Kurniawan ("Karan") | UART: result output and image upload |
 | Bramantio Ananda ("Tio") | Top-level integration (input control, drowsy FSM, alert/display), FPGA implementation (XDC, Vivado, board test), top-level testbenches |
 
