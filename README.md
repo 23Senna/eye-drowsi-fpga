@@ -79,14 +79,14 @@ artifacts; build caches and personal inputs are excluded. See
 
 ## Team
 
-Roles summarised from the daily progress reports (29 Oct – 3 Nov 2026).
+Roles summarised from the daily progress reports and completed integration work (29 Oct – 4 Nov 2026).
 
 | Member | Role |
 |---|---|
-| Michael Reynaldi Tamara ("Reyn") | ML model: dataset, training, int8/fixed-point export; live camera input (OpenCV) |
+| Michael Reynaldi Tamara ("Reyn") | ML model: dataset, training, int8/fixed-point export; webcam eye detection and preprocessing (MediaPipe/OpenCV) |
 | Handy Jonarta | CNN core architecture (parallel layers, 100 MHz), CNN core layers + layer testbenches (with Nabil), block diagrams |
 | Nabil Karim Abdurrahman | CNN core layers + layer testbenches (with Handy), GitHub |
-| Karunia Muda Kurniawan ("Karan") | UART: result output and image upload |
+| Karunia Muda Kurniawan ("Karan") | UART communication, image upload and validation; live webcam-to-FPGA pipeline and GUI integration; verification and benchmarking |
 | Bramantio Ananda ("Tio") | Top-level integration (input control, drowsy FSM, alert/display), FPGA implementation (XDC, Vivado, board test), top-level testbenches |
 
 ## License and attribution
