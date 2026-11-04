@@ -12,7 +12,7 @@ Its archive_manifest.json preserves each original path and SHA256; generated
 projects, checkpoints and bitstreams remain in ignored build/ directories.
 
 Original verification base: 69a3e046c683ecc0d932fe74e9ef83a073d6006f.
-The feature branch codex/uart-image-upload integrates upstream main 56c0237;
+The UART image-upload feature branch integrates upstream main 56c0237;
 post-integration testing used tree 9d8bff9707c5c8c3df5e641a81e9a0e389f2c059.
 This preserves the team's updated documentation, shift consistency guard,
 stub latency defaults and dynamically checked core testbench.
