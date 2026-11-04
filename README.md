@@ -280,8 +280,8 @@ Roles summarised from the daily progress reports (29 Oct – 3 Nov 2026).
 | Member | Role |
 |---|---|
 | Michael Reynaldi Tamara ("Reyn") | ML model: dataset, training, int8/fixed-point export; live camera input (OpenCV) |
-| Handy Jonarta | CNN core architecture (parallel layers, 100 MHz) and block diagrams |
-| Nabil Karim Abdurrahman | CNN core layers + layer testbenches; slides and GitHub |
+| Handy Jonarta | CNN core architecture (parallel layers, 100 MHz), CNN core layers + layer testbenches (with Nabil), block diagrams |
+| Nabil Karim Abdurrahman | CNN core layers + layer testbenches (with Handy), GitHub |
 | Karunia Muda Kurniawan ("Karan") | UART: result output and image upload |
 | Bramantio Ananda ("Tio") | Top-level integration (input control, drowsy FSM, alert/display), FPGA implementation (XDC, Vivado, board test), top-level testbenches |
 
