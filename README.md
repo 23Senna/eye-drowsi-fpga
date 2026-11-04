@@ -86,6 +86,14 @@ binary image uploads with CRC and frame IDs, retaining ROM mode.
 See [image upload](integration/docs/IMAGE_UPLOAD.md), [UART usage](integration/docs/UART.md)
 and [verification record](integration/docs/UART_VERIFICATION.md).
 
+## Windows GUI
+
+An optional, isolated WinForms control app is available in
+[`windows-app/`](windows-app/). It calls the existing `tools/uart_cli.py`
+commands rather than reimplementing the UART protocol, and can select/preview
+eye crops, open the camera capture utility, upload an image, or run a ROM slot.
+See [`windows-app/README.md`](windows-app/README.md) for setup.
+
 ## Quick start
 
 ### 1. Run the simulations

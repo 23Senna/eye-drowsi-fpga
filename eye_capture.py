@@ -1,4 +1,5 @@
 import os
+import argparse
 import time
 import cv2
 import numpy as np
@@ -16,10 +17,6 @@ PAD        = 0.35        # extra margin around the eye (fraction of eye width)
 # "right"/"left" refer to the person's own eyes
 RIGHT_EYE = (33, 133, 159, 145)
 LEFT_EYE  = (362, 263, 386, 374)
-
-os.makedirs(os.path.join(OUT_DIR, "left"), exist_ok=True)
-os.makedirs(os.path.join(OUT_DIR, "right"), exist_ok=True)
-
 
 def crop_eye(gray, landmarks, idx, w, h):
     """Crop a square region around one eye and resize to EYE_SIZE x EYE_SIZE."""
@@ -41,6 +38,13 @@ def crop_eye(gray, landmarks, idx, w, h):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Capture 24x24 eye crops from a camera.")
+    parser.add_argument("--out-dir", default=OUT_DIR, help="Output directory for left/right crops")
+    args = parser.parse_args()
+    out_dir = args.out_dir
+    os.makedirs(os.path.join(out_dir, "left"), exist_ok=True)
+    os.makedirs(os.path.join(out_dir, "right"), exist_ok=True)
+
     cap = cv2.VideoCapture(CAM_INDEX)
     if not cap.isOpened():
         raise RuntimeError("Cannot open camera")
@@ -59,53 +63,55 @@ def main():
 
     print("Press SPACE to start/stop saving, Q to quit.")
 
-    while True:
-        ok, frame = cap.read()
-        if not ok:
-            break
+    try:
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                break
 
-        h, w = frame.shape[:2]
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        result = face_mesh.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            h, w = frame.shape[:2]
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            result = face_mesh.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
-        if result.multi_face_landmarks:
-            lm = result.multi_face_landmarks[0].landmark
-            left_img,  lbox = crop_eye(gray, lm, LEFT_EYE,  w, h)
-            right_img, rbox = crop_eye(gray, lm, RIGHT_EYE, w, h)
+            if result.multi_face_landmarks:
+                lm = result.multi_face_landmarks[0].landmark
+                left_img,  lbox = crop_eye(gray, lm, LEFT_EYE,  w, h)
+                right_img, rbox = crop_eye(gray, lm, RIGHT_EYE, w, h)
 
-            # draw boxes for preview
-            for box in (lbox, rbox):
-                cv2.rectangle(frame, box[:2], box[2:], (0, 255, 0), 1)
+                # draw boxes for preview
+                for box in (lbox, rbox):
+                    cv2.rectangle(frame, box[:2], box[2:], (0, 255, 0), 1)
 
-            now = time.time()
-            if (recording and left_img is not None and right_img is not None
-                    and now - last_save >= interval):
-                cv2.imwrite(f"{OUT_DIR}/left/{frame_id:06d}.png",  left_img)
-                cv2.imwrite(f"{OUT_DIR}/right/{frame_id:06d}.png", right_img)
-                frame_id += 1
-                last_save = now
+                now = time.time()
+                if (recording and left_img is not None and right_img is not None
+                        and now - last_save >= interval):
+                    cv2.imwrite(f"{out_dir}/left/{frame_id:06d}.png",  left_img)
+                    cv2.imwrite(f"{out_dir}/right/{frame_id:06d}.png", right_img)
+                    frame_id += 1
+                    last_save = now
 
-            # show the 24x24 crops enlarged in the corner
-            if left_img is not None and right_img is not None:
-                preview = np.hstack([left_img, right_img])
-                preview = cv2.resize(preview, None, fx=4, fy=4,
-                                     interpolation=cv2.INTER_NEAREST)
-                ph, pw = preview.shape
-                frame[0:ph, 0:pw] = cv2.cvtColor(preview, cv2.COLOR_GRAY2BGR)
+                # show the 24x24 crops enlarged in the corner
+                if left_img is not None and right_img is not None:
+                    preview = np.hstack([left_img, right_img])
+                    preview = cv2.resize(preview, None, fx=4, fy=4,
+                                         interpolation=cv2.INTER_NEAREST)
+                    ph, pw = preview.shape
+                    frame[0:ph, 0:pw] = cv2.cvtColor(preview, cv2.COLOR_GRAY2BGR)
 
-        status = f"REC  saved: {frame_id}" if recording else "PAUSED (SPACE to record)"
-        cv2.putText(frame, status, (10, h - 15), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6, (0, 0, 255) if recording else (255, 255, 255), 2)
-        cv2.imshow("Eye capture", frame)
+            status = f"REC  saved: {frame_id}" if recording else "PAUSED (SPACE to record)"
+            cv2.putText(frame, status, (10, h - 15), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6, (0, 0, 255) if recording else (255, 255, 255), 2)
+            cv2.imshow("Eye capture", frame)
 
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            break
-        elif key == ord(' '):
-            recording = not recording
-
-    cap.release()
-    cv2.destroyAllWindows()
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q') or cv2.getWindowProperty("Eye capture", cv2.WND_PROP_VISIBLE) < 1:
+                break
+            elif key == ord(' '):
+                recording = not recording
+    finally:
+        cap.release()
+        face_mesh.close()
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":

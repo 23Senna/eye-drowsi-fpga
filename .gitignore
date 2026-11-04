@@ -1,5 +1,8 @@
 # simulation / build outputs
 build/
+windows-app/bin/
+windows-app/obj/
+eye_dataset/
 *.vvp
 *.vcd
 *.wdb

@@ -1,0 +1,4 @@
+-r requirements.txt
+numpy
+opencv-python
+mediapipe==0.10.21
