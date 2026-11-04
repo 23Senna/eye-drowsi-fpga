@@ -6,6 +6,8 @@ keeps one serial connection open and displays the camera, ROI, exact 24x24
 input enlarged for inspection, and fresh FPGA results. PNG disk roundtrips
 and one-process-per-image are not used in this live path.
 
+[Common installation/demo guide](../../docs/GETTING_STARTED.md).
+
 ## Environment
 
 Use Python 3.12 with an isolated camera environment; the older pinned
@@ -17,8 +19,8 @@ py -3.12 -m venv .venv-camera
 .\.venv-camera\Scripts\python.exe tools/live_webcam.py --check
 ```
 
-The local setup session can use the bundled Python 3.12 runtime to create
-the same environment if py -3.12 is unavailable. The .venv-camera directory
+Install Python 3.12 if py -3.12 is unavailable; developer-bundled runtimes
+are not a prerequisite for other team members. The .venv-camera directory
 is ignored and independent of the existing .venv UART environment. There
 is only one OpenCV wheel (opencv-contrib-python); avoid installing a second
 opencv-python wheel into this environment.
@@ -80,8 +82,8 @@ OPEN/CLOSED and warning labels in FPGA mode come from the FPGA result.
 Session events go to build/live_sessions/<unique timestamp>/events.jsonl:
 camera/port configuration, observation sequence and frame ID, host monotonic
 capture/send/result timestamps, capture intervals, roundtrip, result age,
-replaced frames, face availability, operator toggles and errors. Images and
-video are not recorded by default. The capture timestamp marks host read
+replaced frames, face availability, operator toggles and errors. Without --diagnostics, images/video are not recorded; the Windows GUI
+explicitly enables diagnostics and saves exact uploaded eye crops. The capture timestamp marks host read
 completion, not the sensor's exposure timestamp. Serial roundtrip includes
 transfer, inference, acknowledgements and output; cycles/us only measure CNN.
 

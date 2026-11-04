@@ -1,280 +1,81 @@
-# CNN Eye-State (Drowsiness) Classifier on Basys 3 FPGA
+# CNN eye-state accelerator on Basys 3
 
-A small, fully integer CNN that classifies a 24 × 24 grayscale eye crop as
-**open** or **closed**. The design is implemented in Verilog for the Digilent
-**Basys 3** (Artix-7 `xc7a35tcpg236-1`).
+Group 3 KCCI FPGA project: integer CNN inference and observation-count
+closure warning on the Basys 3 (Artix-7 xc7a35tcpg236-1).
 
-This is the final project for **FPGA KCCI Training (Training VLSI) – Group 3**.
-The motivating use case is driver-drowsiness detection for ADAS.
+**Start with [setup and demo](docs/GETTING_STARTED.md) and
+[current status/limitations](docs/STATUS_AND_ISSUES.md).**
 
-> **Scope:** The FPGA classifies pre-cropped, pre-stored eye images. The board
-> contains 16 test images in ROM, selected with switches, and the integration
-> top can accept new 24x24 eye crops over UART. It does not provide
-> camera input, face detection, or eye localisation. See
-> [`docs/STATUS_AND_ISSUES.md`](docs/STATUS_AND_ISSUES.md) before quoting
-> performance figures.
-
-## Pipeline
+## System
 
 ```text
-Roboflow eye dataset
-  └─ ml/prepare_data.py
-       └─ 24 × 24 crops (.npz)
-            └─ ml/train.py (PyTorch, floating point)
-                 └─ ml/quantize_export.py (int8 weights, golden outputs, .mem)
-                      └─ rtl/ (Verilog CNN, ROMs loaded from .mem)
-                           └─ Basys 3
+Webcam -> Laptop: MediaPipe -> eye/brow crop -> grayscale 24x24 -> contrast
+       -> UART image upload -> FPGA: CNN -> OPEN/CLOSED -> warning FSM
+       -> UART result -> Windows GUI/OpenCV preview, board LEDs/display/buzzer
 ```
 
-Network: `24 × 24 u8 → Conv3×3×4 → ReLU(>>10, sat 127) → MaxPool2 →
-Conv3×3×8 → ReLU(>>6, sat 127) → MaxPool2 → FC 128→2 → argmax`.
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full data layout
-and hardware details.
+The FPGA also retains 16 ROM test slots and board sequence modes. Camera
+localization/preprocessing runs on the laptop; there is no direct camera
+sensor interface on the FPGA. The model is
+`24x24 u8 -> Conv3x3x4 -> ReLU(>>10, sat 127) -> MaxPool2 -> Conv3x3x8 ->
+ReLU(>>6, sat 127) -> MaxPool2 -> FC 128->2 -> argmax`.
+[Architecture](docs/ARCHITECTURE.md), [active interface](integration/docs/INTERFACE.md).
 
-## Results at a glance
+## Results and evidence
 
-| Item | Result | How obtained |
+| Measurement | Result | Configuration / evidence |
 |---|---|---|
-| int8 model accuracy | train 97.2% · valid 94.4% · **test 98.1%** (108 images) | Recomputed from `ml/export/*.mem` and `ml/*.npz` with the bit-exact NumPy model |
-| RTL vs. golden model | **16/16 logit pairs identical** (`rtl/cnn_top.v`) | Icarus Verilog via `./run_sim.sh` |
-| Unit tests | All pass with 0 errors | `./run_sim.sh` |
-| Latency | 7,996 cycles/image = 80 µs at 100 MHz | Filter-parallel layers (4 / 8 / 2 `mac_pipe` in `conv1_layer` / `conv2_layer` / `fc_layer`); measured by simulation |
-| Resources | 2,351 LUT, 2,181 FF, 7.5 BRAM, 14 DSP | Vivado 2025.2.1, full board top `integration/` `drowsiness_top` incl. `cnn_top` + UART/upload (4 Nov, `build_uart.tcl`) |
-| **Timing at 100 MHz** | **Met: WNS +1.201 ns, WHS +0.034 ns** | Same build; 100 MHz board clock used directly, no MMCM; board test PASS (4 Nov) |
+| CNN latency | 7,996 cycles = **79.96 us at 100 MHz** | Filter-parallel 4/8/2 lanes; UART integer us field truncates to 79 |
+| FPGA resources | 2,376 LUT, 2,230 FF, 7.5 BRAM, 14 DSP | drowsiness_top + real CNN + UART/upload + buzzer; 9dac154, Vivado 2025.2, build uart_hw_20261104_131740 |
+| Routed timing | Setup +0.948 ns, hold +0.067 ns | [Raw reports and input hashes](docs/reports/current_build_20261104/README.md); all 29 recorded build-input hashes match reviewed main e3ac7ea |
+| RTL/golden | 16/16 exported logit pairs identical; 14/16 labels correct | Recorded regressions; slots 0/1 are known model misses |
+| Host/GUI | 30 host tests, Release GUI build and mock bridge smoke pass | [Selected evidence](docs/reports/current_build_20261104/README.md); operator reports physical integrated GUI passed |
+| CPU baseline | CPU median 152.8 us; FPGA 79.96 us; **1.911x** | [Exact integer NumPy baseline](integration/docs/INFERENCE_BENCHMARK.md), Ryzen 9 5900HS, Balanced; not an optimized INT8-runtime comparison |
+| Exported model accuracy | train 97.23%, valid 94.44%, test 98.15% (108 images) | Prior recomputation from committed export/crops; small single-subject evaluation with possible frame leakage |
 
-> **Evaluation caveat:** The test set is small and all samples come from one
-> subject. Treat the 98.1% test accuracy as optimistic; see the issues document
-> for details.
+These are CNN compute times, not webcam/serial/display latency. Different
+historical builds have different resource/timing results; use the
+[evidence index](docs/reports/README.md). Dataset accuracy does not establish
+performance on unseen people. Live target 10 Hz is not guaranteed throughput;
+Frame ID exhaustion and manual gap recovery remain documented limitations.
 
-## Repository layout
+## Run
 
-```text
-├── README.md
-├── run_sim.sh                  # Runs all simulations and checks golden outputs
-├── rtl/
-│   ├── basys3_wrapper.v        # FPGA top: buttons, switches, LEDs, 7-segment
-│   ├── cnn_top.v               # Image loader, img/a1/a2 buffers (synchronous reads), layer sequencing FSM
-│   ├── conv1_layer.v, conv2_layer.v, fc_layer.v  # Pipelined layers (mac_pipe + relu_requant + maxpool2x2)
-│   ├── mac_pipe.v              # Pipelined multiply-accumulate
-│   ├── rom_weights.v           # Synchronous .mem ROMs
-│   ├── seven_seg_drive.v       # Displays OPN / CLSD / ----
-│   ├── conv_pe.v, relu_requant.v
-│   ├── conv_act.v, maxpool2x2.v # Helper modules
-│   └── legacy/cnn_top_original_buggy.v
-├── sim/
-│   ├── tb_cnn.v                # Top-level testbench for 16 images
-│   ├── tb_conv1_layer.v, tb_conv2_layer.v, tb_fc_layer.v  # Layer-level testbenches
-│   ├── unit/                   # Unit testbenches and vector generator
-│   └── unit_vectors/           # Reference test vectors
-├── constraints/basys3.xdc
-├── vivado/create_project.tcl   # Recreates the Vivado project
-├── ml/                         # Data preparation, training, and exports
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── STATUS_AND_ISSUES.md
-│   ├── reports/
-│   └── team/
-├── integration/                # Drowsiness top level for the board (see integration/README.md)
-└── examples/digits-demo-basys3 # Separate 8 × 8 digit CNN reference demo
-```
-
-## UART extension
-
-The integration top supports 115200 8N1 UART, SW9 board/PC ownership, SLOT/RUN commands
-and RESULT telemetry from manual and sequence modes. It also accepts 576-byte
-binary image uploads with CRC and frame IDs, retaining ROM mode.
-See [buzzer alarm](integration/docs/BUZZER.md), [image upload](integration/docs/IMAGE_UPLOAD.md), [UART usage](integration/docs/UART.md)
-and [verification record](integration/docs/UART_VERIFICATION.md).
-
-## Windows GUI
-
-For continuous webcam-to-FPGA inference with a responsive camera preview,
-use [the live webcam client](integration/docs/LIVE_WEBCAM.md).
-
-An optional, isolated WinForms control app is available in
-[`windows-app/`](windows-app/). It calls the existing `tools/uart_cli.py`
-commands rather than reimplementing the UART protocol, and can select/preview
-eye crops, open the camera capture utility, upload an image, or run a ROM slot.
-See [`windows-app/README.md`](windows-app/README.md) for setup.
-
-## Quick start
-
-### 1. Run the simulations
-
-No Vivado installation is required. Install `iverilog`, `python3`, and
-`numpy`, then run from the repository root:
-
-```bash
-./run_sim.sh
-```
-
-The expected final line is `ALL TESTS PASSED`.
-
-The Vivado testbench also compares every prediction with the labels in the
-exported test set and prints `CORRECT` or `WRONG` for each image, followed by
-the classification total. Images 0 and 1 are intentionally included model
-misses, so the expected result is `14 / 16`.
-
-### 2. Retrain and re-export (optional)
-
-The committed files in `ml/` are sufficient to reproduce the exported model.
-Run the following commands from the `ml/` directory:
-
-```bash
-pip install -r requirements.txt
-python train.py
-python quantize_export.py
-```
-
-The raw Roboflow images and labels are not included in this repository.
-`prepare_data.py` therefore requires a separately downloaded dataset. See
-[`ml/README.md`](ml/README.md) for the expected directory structure and file
-formats.
-
-### 3. Create the Vivado project
-
-Vivado 2024.2 was used for the existing reports. From the repository root:
-
-```bash
-vivado -mode batch -source vivado/create_project.tcl
-```
-
-Open the generated project, then run synthesis, implementation, and bitstream
-generation. The pipelined `cnn_top` meets 100 MHz (WNS +2.385 ns in the
-integration build, Vivado 2025.2.1); the reports in `docs/reports/` are older
-than the pipelined RTL. For the full drowsiness demo use `integration/`
-(see [integration/README.md](integration/README.md)).
-
-#### Vivado simulation top levels
-
-Vivado has two different top-level settings:
-
-| Setting | Correct value for this eye project |
-|---|---|
-| **Design top** (`sources_1`) | `basys3_wrapper` |
-| **Simulation top** (`sim_1`) | `tb_cnn` from `sim/tb_cnn.v` |
-
-`tb_cnn` instantiates `cnn_top` and checks all 16 stored eye images. Do **not**
-use `tb_cnn_core`: that testbench belongs to the separate
-[`examples/digits-demo-basys3`](examples/digits-demo-basys3) digit demo.
-
-The simulation log should contain the eye-project testbench and files similar
-to:
-
-```text
-tb_cnn.v
-cnn_top.v
-rom_weights.v
-```
-
-#### Layer-level simulations and waveforms
-
-The repository also contains self-checking testbenches for each pipelined
-layer:
-
-| Testbench | Golden data checked |
-|---|---|
-| `sim/tb_conv1_layer.v` | `expected_a1.mem`, 484 pooled values |
-| `sim/tb_conv2_layer.v` | `expected_a2.mem`, 128 pooled values |
-| `sim/tb_fc_layer.v` | logits in `expected.txt` |
-
-The testbenches use synchronous input memories, matching the one-clock
-latency contract of `rom_weights.v` and the layer comments. They also write a
-VCD waveform file. With Icarus on Windows, run from the repository root:
+Follow [one host setup and board/GUI checklist](docs/GETTING_STARTED.md).
+The camera environment is Python 3.12 `.venv-camera`; Windows GUI builds
+with .NET 8. Full integrated bitstream build:
 
 ```powershell
-New-Item -ItemType Directory -Force build | Out-Null
-iverilog -g2005 -Wall -o build\tb_conv1_layer.vvp `
-  rtl\conv1_layer.v rtl\mac_pipe.v rtl\relu_requant.v rtl\maxpool2x2.v `
-  sim\tb_conv1_layer.v
-Push-Location ml\export
-vvp ..\..\build\tb_conv1_layer.vvp
-Pop-Location
+vivado -mode batch -source integration/scripts/build_uart.tcl
 ```
 
-Repeat with `tb_conv2_layer.v` and `tb_fc_layer.v`:
+This uses `integration/rtl/drowsiness_top.v`. The root
+`vivado/create_project.tcl` and `rtl/basys3_wrapper.v` form a separate
+standalone CNN demo; its controls/bitstream are not the integrated GUI flow.
 
-```powershell
-iverilog -g2005 -Wall -o build\tb_conv2_layer.vvp `
-  rtl\conv2_layer.v rtl\mac_pipe.v rtl\relu_requant.v rtl\maxpool2x2.v `
-  sim\tb_conv2_layer.v
-Push-Location ml\export
-vvp ..\..\build\tb_conv2_layer.vvp
-Pop-Location
+## Repository map
 
-iverilog -g2005 -Wall -o build\tb_fc_layer.vvp `
-  rtl\fc_layer.v rtl\mac_pipe.v sim\tb_fc_layer.v
-Push-Location ml\export
-vvp ..\..\build\tb_fc_layer.vvp
-Pop-Location
-```
-
-The default test is image/slot `0`. Test another slot by overriding the
-testbench parameter at compile time, for example:
-
-```powershell
-iverilog -g2005 -Ptb_conv1_layer.IMAGE=3 -o build\tb_conv1_image3.vvp `
-  rtl\conv1_layer.v rtl\mac_pipe.v rtl\relu_requant.v rtl\maxpool2x2.v `
-  sim\tb_conv1_layer.v
-```
-
-Open the generated `tb_conv1_layer.vcd`, `tb_conv2_layer.vcd`, or
-`tb_fc_layer.vcd` in GTKWave (`gtkwave <file>.vcd`). In Vivado, add the same
-testbench files to `sim_1`, set one of them as the simulation top, click
-**Run Simulation -> Run Behavioral Simulation**, then add signals from the
-Objects window to the Wave window and run. Useful signals are `clk`, `rst`,
-`start`, `done`, the memory addresses/data, write enables, output
-addresses/data, and (for FC) `logit0`/`logit1`.
-
-If the Vivado Sources panel shows `examples/digits-demo-basys3` or
-`tb_cnn_core`, close that project and create a clean one using
-`vivado/create_project.tcl`. For an existing project, the equivalent Tcl
-settings are:
-
-```tcl
-set_property top basys3_wrapper [get_filesets sources_1]
-set_property top tb_cnn [get_filesets sim_1]
-update_compile_order -fileset sources_1
-update_compile_order -fileset sim_1
-```
-
-If synthesis reports:
-
-```text
-[Synth 8-4391] module 'rom_weights' not found
-```
-
-the open Vivado project does not contain the current ROM source, even if the
-file exists on disk. In the Tcl Console, add it to the active design fileset
-and refresh compile order:
-
-```tcl
-add_files -norecurse D:/project/cnn-eye-drowsiness-basys3/cnn-eye-drowsiness-basys3/rtl/rom_weights.v
-update_compile_order -fileset sources_1
-set_property top basys3_wrapper [get_filesets sources_1]
-```
-
-Then right-click **Synthesis** and choose **Reset Runs**, followed by **Run
-Synthesis**. If the warning persists, close the project and run the complete
-`vivado/create_project.tcl` script instead; do not keep adding duplicate
-copies of `cnn_top.v` or `rom_weights.v`.
-
-The project path in the simulation log must also point to this repository:
-`D:/project/cnn-eye-drowsiness-basys3/cnn-eye-drowsiness-basys3`. A path
-containing `eye-drowsi-fpga/eye-drowsi-fpga` indicates a different or copied
-Vivado project.
-
-### 4. Use the board
-
-| Control | Function |
+| Path | Role |
 |---|---|
-| `SW[3:0]` | Select one of the 16 stored test images |
-| `btnR` | Start inference on the rising edge |
-| `btnC` | Reset |
-| 7-segment display | `----` while running, then `OPN ` (open) or `CLSD` (closed) |
-| `LED0` | Prediction: `1` = open, `0` = closed |
-| `LED14` | Start pulse |
-| `LED15` | Done |
+| rtl/, sim/, run_sim.sh | CNN, layers, numerical tests |
+| ml/ | Training/export scripts, compact crops, weights/golden outputs; [ML instructions](ml/README.md) |
+| integration/ | Active board top, UART, temporal rules, buzzer, XDC/Tcl, integrated tests |
+| tools/ | UART CLI, live capture/transport, diagnostics, benchmark and host tests |
+| windows-app/ | WinForms front end using the persistent live client; [GUI details](windows-app/README.md) |
+| docs/ | Current status/setup/architecture, dated journal, archived evidence |
+| examples/ | Separate digit CNN learning reference |
+
+[UART](integration/docs/UART.md) · [Image upload](integration/docs/IMAGE_UPLOAD.md)
+· [Live client](integration/docs/LIVE_WEBCAM.md) · [Buzzer](integration/docs/BUZZER.md)
+
+## Verification and contributions
+
+With Bash, Icarus Verilog/vvp and Python/NumPy, run `bash run_sim.sh` and
+`bash integration/sim/run.sh`. Host tests and GUI smoke commands are in
+[the setup guide](docs/GETTING_STARTED.md). Software and hardware evidence
+are labelled separately. Small vectors/model exports/reports are deliberate
+artifacts; build caches and personal inputs are excluded. See
+[repository policy](docs/REPOSITORY_POLICY.md).
 
 ## Team
 

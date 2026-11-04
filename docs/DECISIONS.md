@@ -1,5 +1,20 @@
 # Integration Decisions
 
+Dated decision history. [Current status](STATUS_AND_ISSUES.md) supersedes
+old pending statements.
+
+## 2026-11-04: Repository documentation and artifact maintenance
+
+- Use one current status index and Python 3.12 camera setup; preserve dated
+  reports, old contracts and journals as historical evidence.
+- Publish the 9dac154 build reports with source/hash identity; do not mix
+  older resource figures into the current build table.
+- Keep personal inputs/editor/build metadata out of Git; retain small model
+  artifacts and reproducible vectors. Code license remains a team decision.
+- GUI integration supersedes the earlier standalone-only plan below; its
+  diagnostics is enabled and physical acceptance is operator-reported.
+
+
 ## 2026-11-04: Live webcam host pipeline
 
 - Reuse the team's MediaPipe FaceMesh/crop function with OpenCV grayscale and INTER_AREA resizing, followed by the established 576-byte CRC upload protocol.

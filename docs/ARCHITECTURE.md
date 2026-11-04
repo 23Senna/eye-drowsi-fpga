@@ -32,7 +32,15 @@ Quantisation: `ml/quantize_export.py` — per-tensor symmetric int8 weights; shi
 
 The 16 demo images are chosen by `quantize_export.py`: the first two are the model's misclassified test images (so **demo images 0 and 1 are expected to be wrong**), the remaining 14 alternate closed/open.
 
-## 3. Hardware
+## 3. Active integrated system
+
+`integration/rtl/drowsiness_top.v` instantiates the CNN, UART/upload staging
+RAM, temporal FSM, board controls/display and buzzer. The host captures and
+localizes the selected eye, crops/resizes/remaps contrast, then sends 576
+uint8 pixels. GUI results are FPGA decisions; recorder EAR indicators are a
+separate host heuristic. See [active interface](../integration/docs/INTERFACE.md).
+
+## 3a. Standalone CNN wrapper (separate board demo)
 
 ```
 basys3_wrapper ── btnR → rising-edge → start
@@ -57,9 +65,14 @@ basys3_wrapper ── btnR → rising-edge → start
   value at a time instead of being transferred as large packed vectors.
 * The img / a1 / a2 buffers are read synchronously (one clock after the
   address), so Vivado maps them to block RAM and the core meets 100 MHz:
-  WNS +2.385 ns, 601 LUT / 700 FF / 6.5 BRAM / 3 DSP for the whole
-  `integration/` board top (Vivado 2025.2.1, 2 Nov).
-* `cnn_top` ports: `clk, rst (async, active-high), start, img_base_addr[13:0] → done, prediction, logit0, logit1 (signed 32)`.
+  current integrated build: setup +0.948 ns, hold +0.067 ns, 2,376 LUT /
+  2,230 FF / 7.5 BRAM / 14 DSP (9dac154, Vivado 2025.2, 4 Nov).
+  [Exact build evidence](reports/current_build_20261104/README.md).
+  The 601 LUT / 3 DSP / +2.385 ns figures belong to the older 2 Nov design.
+* `cnn_top` ports include `clk, rst` (async active-high), `start`,
+  `img_base_addr[13:0]`, `external_image`, `external_addr[9:0]`,
+  `external_data[7:0]`, `done`, `prediction`, signed 32-bit `logit0/1`.
+  External input is enabled by parameter EXTERNAL_INPUT in the integrated top.
 * Weight ROMs are **synchronous-read**: data appears one clock after the address. This is exactly what the original design got wrong — see below.
 
 ## 4. Pipelined layer implementation

@@ -18,38 +18,23 @@ modify FPGA, RTL, or ML files.
 - runs one of the 16 images already stored in the FPGA ROM;
 - displays the existing `RESULT` telemetry and host activity.
 
-For manual image/ROM operations the application starts `tools/uart_cli.py`.
-Live mode uses the persistent client described below. It uses
-`.venv\Scripts\python.exe` when that environment exists, otherwise it falls
-back to `python` on `PATH`. The Basys 3 must be in PC ownership (`SW9` up)
-for upload and ROM-slot commands.
+## Setup
 
-## Run on Windows
+Follow [the common setup and demo guide](../docs/GETTING_STARTED.md).
+Use Python 3.12 `.venv-camera` with tools/requirements-live.txt; it includes
+UART, OpenCV/MediaPipe and Pillow for manual images. The GUI prefers this
+interpreter for both live and manual commands. Do not install a second OpenCV
+wheel. An older .venv is optional for standalone UART use, not the live setup.
 
-Install the .NET 8 SDK and prepare the existing host environment from the
-repository root:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r tools\requirements-camera.txt
-dotnet run --project windows-app\EyeDrowsinessControl.csproj
-```
-
-`tools\requirements-camera.txt` includes the existing UART dependency plus
-NumPy, OpenCV, and MediaPipe 0.10.21 required by `eye_capture.py`. The
-MediaPipe version is pinned because newer releases removed the legacy
-`mp.solutions.face_mesh` API used by the existing capture utility. If the environment
-already exists, install the missing camera packages with:
+Build with .NET 8 SDK; run with a compatible Windows Desktop runtime:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r tools\requirements-camera.txt
+dotnet build windows-app/EyeDrowsinessControl.csproj -c Release
+.\windows-app\bin\Release\net8.0-windows\EyeDrowsinessControl.exe
 ```
 
-For PNG/JPEG upload, also install Pillow:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r tools\requirements-image.txt
-```
+For manual images/ROM, the app invokes uart_cli.py; live mode runs one
+persistent live_webcam.py process. Both use the board's PC ownership (SW9 up).
 
 The app is intentionally located in its own folder. Building it produces
 only `windows-app\bin` and `windows-app\obj`; the FPGA and ML flow remains

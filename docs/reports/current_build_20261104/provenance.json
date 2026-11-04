@@ -1,0 +1,12 @@
+{
+  "head": "9dac15469da453cfe3ea5340ca7ef9e3e25fcf72",
+  "source_state": "Current main 9dac154; uncommitted live host and verification changes do not alter FPGA RTL",
+  "top": "drowsiness_top",
+  "part": "xc7a35tcpg236-1",
+  "clock_mhz": 100,
+  "programmed_in_this_session": false,
+  "bitstream_sha256": "4A21A9376E3E84E0A05CABC7B1123973D0A60FCB8569FCE91BF4E53EC00B86EB",
+  "setup_ns": 0.948,
+  "hold_ns": 0.067,
+  "build_complete": true
+}

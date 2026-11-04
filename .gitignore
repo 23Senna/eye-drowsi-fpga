@@ -39,6 +39,14 @@ integration/reports/
 .venv/
 .venv-camera/
 
+# Local personal inputs, editor metadata and temporary workspace outputs
+/local_inputs/
+/.embedder/
+/tmp/
+/output/
+/-p/
+/test3.jpg
+
 /clockInfo.txt
 
 /dfx_runtime.txt

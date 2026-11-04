@@ -1,6 +1,6 @@
 # ml/ — dataset, training, quantisation, export
 
-Run all scripts from inside this folder (they use relative paths). Scripts are unchanged from the team's originals.
+Run all scripts from inside this folder (they use relative paths). The scripts preserve the team training/export flow.
 
 | Step | Script | In → Out |
 |---|---|---|
@@ -8,6 +8,12 @@ Run all scripts from inside this folder (they use relative paths). Scripts are u
 | 2 | `train.py` | `*.npz` → `net_float.pt` (prints val accuracy every 10 epochs and float test accuracy) |
 | 3 | `quantize_export.py` | `net_float.pt` + `*.npz` → `export/*.mem`, `export/expected.txt`, `export/params.txt`; prints int8 accuracies and required bit widths |
 | – | `view_data.py` → `grid.png`; `view_testimg.py` shows the 16 board test images from `export/images.mem` | |
+
+The original training seed and complete dependency versions were not recorded;
+retraining is not guaranteed to regenerate byte-identical weights. Committed
+export/golden files are the current numerical baseline. Train in an isolated
+environment, separate from .venv-camera, and record versions/seed for the next
+export.
 
 Requirements: `pip install -r requirements.txt` (numpy, torch, opencv-python, matplotlib). Exact versions the team used were not recorded.
 
