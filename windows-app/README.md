@@ -13,6 +13,8 @@ modify FPGA, RTL, or ML files.
 - lets you stop the camera with the GUI button or the camera window Close/Q action;
 - loads captured left/right eye crops into a multi-select list for FPGA classification;
 - uploads an image and runs one FPGA inference;
+- runs live eye detection at 10 FPS by uploading each captured left-eye crop
+  sequentially over UART;
 - runs one of the 16 images already stored in the FPGA ROM;
 - displays the existing `RESULT` telemetry and host activity.
 
@@ -58,3 +60,12 @@ window to record crops, then press `Q`, close that window, or click
 list. Select one or more entries with Ctrl/Shift and click **Upload & classify**.
 Each selected crop is uploaded sequentially with an automatically incremented
 frame ID.
+
+Live workflow: select the Basys 3 COM port, click **Start live 10 FPS**, and
+leave `SW9` up with the current UART-upload bitstream programmed. The camera
+starts recording automatically; each new left-eye crop is uploaded sequentially
+using the existing `LOAD`/`RUN_FRAME` protocol. The latest FPGA result appears
+in the result panel and activity log. Click **Stop live detection** or close
+the camera window to stop. Only one UART upload is active at a time, so the
+effective rate can be lower if the board or serial link takes longer than
+100 ms.

@@ -7,5 +7,6 @@
     <Nullable>enable</Nullable>
     <AssemblyName>EyeDrowsinessControl</AssemblyName>
     <RootNamespace>EyeDrowsinessControl</RootNamespace>
+    <DefaultItemExcludes>$(DefaultItemExcludes);build\**</DefaultItemExcludes>
   </PropertyGroup>
 </Project>

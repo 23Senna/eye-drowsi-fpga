@@ -40,6 +40,7 @@ def crop_eye(gray, landmarks, idx, w, h):
 def main():
     parser = argparse.ArgumentParser(description="Capture 24x24 eye crops from a camera.")
     parser.add_argument("--out-dir", default=OUT_DIR, help="Output directory for left/right crops")
+    parser.add_argument("--record", action="store_true", help="Start saving frames immediately")
     args = parser.parse_args()
     out_dir = args.out_dir
     os.makedirs(os.path.join(out_dir, "left"), exist_ok=True)
@@ -59,9 +60,9 @@ def main():
     interval = 1.0 / FPS_SAVE
     last_save = 0.0
     frame_id = 0
-    recording = False
+    recording = args.record
 
-    print("Press SPACE to start/stop saving, Q to quit.")
+    print("Press SPACE to start/stop saving, Q to quit.", flush=True)
 
     try:
         while True:
