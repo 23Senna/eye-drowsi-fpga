@@ -88,6 +88,9 @@ and [verification record](integration/docs/UART_VERIFICATION.md).
 
 ## Windows GUI
 
+For continuous webcam-to-FPGA inference with a responsive camera preview,
+use [the live webcam client](integration/docs/LIVE_WEBCAM.md).
+
 An optional, isolated WinForms control app is available in
 [`windows-app/`](windows-app/). It calls the existing `tools/uart_cli.py`
 commands rather than reimplementing the UART protocol, and can select/preview

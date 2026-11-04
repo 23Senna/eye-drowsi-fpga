@@ -63,7 +63,7 @@ def main():
     command('generate_units',[sys.executable,src/'sim/unit/gen_vectors.py'],unit)
     rtl=src/'rtl';ir=src/'integration/rtl';sim=src/'integration/sim'
     cnn=[rtl/(m+'.v') for m in ['cnn_top','rom_weights','conv1_layer','conv2_layer','fc_layer','mac_pipe','relu_requant','maxpool2x2']]
-    core=[ir/(m+'.v') for m in ['drowsiness_top','input_control','drowsy_fsm','alert_control']]
+    core=[ir/(m+'.v') for m in ['drowsiness_top','input_control','drowsy_fsm','alert_control','buzzer_control']]
     serial=[ir/(m+'.v') for m in ['uart_rx','uart_tx','uart_command','uart_ascii_tx','uart_monitor','uart_image_rx']] if not args.baseline else []
     stub=[ir/(m+'.v') for m in ['cnn_core_stub','image_rom','weight_bias_rom']]
     tests={

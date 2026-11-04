@@ -35,6 +35,7 @@ integration/vivado/
 integration/reports/
 
 .venv/
+.venv-camera/
 
 /clockInfo.txt
 
