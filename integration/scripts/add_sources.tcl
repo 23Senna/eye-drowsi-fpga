@@ -12,7 +12,7 @@ if {![file exists [file join $team rtl cnn_top.v]]} { set team [file normalize [
 if {![info exists USE_STUB]} { set USE_STUB 0 }
 
 set srcs {}
-foreach m {drowsiness_top input_control drowsy_fsm alert_control uart_rx uart_tx uart_command uart_ascii_tx uart_monitor uart_image_rx} { lappend srcs [file join $fpga rtl $m.v] }
+foreach m {drowsiness_top input_control drowsy_fsm alert_control buzzer_control uart_rx uart_tx uart_command uart_ascii_tx uart_monitor uart_image_rx} { lappend srcs [file join $fpga rtl $m.v] }
 if {$USE_STUB} {
     foreach m {cnn_core_stub image_rom weight_bias_rom} { lappend srcs [file join $fpga rtl $m.v] }
     set mems [glob [file join $fpga mem *.mem]]

@@ -83,7 +83,7 @@ and hardware details.
 The integration top supports 115200 8N1 UART, SW9 board/PC ownership, SLOT/RUN commands
 and RESULT telemetry from manual and sequence modes. It also accepts 576-byte
 binary image uploads with CRC and frame IDs, retaining ROM mode.
-See [image upload](integration/docs/IMAGE_UPLOAD.md), [UART usage](integration/docs/UART.md)
+See [buzzer alarm](integration/docs/BUZZER.md), [image upload](integration/docs/IMAGE_UPLOAD.md), [UART usage](integration/docs/UART.md)
 and [verification record](integration/docs/UART_VERIFICATION.md).
 
 ## Windows GUI

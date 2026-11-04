@@ -85,6 +85,8 @@ Slots 0 and 1 are the two misclassified test images (label open → predicted cl
 | `SW[15]` | 7-segment shows the last latency in cycles (hex, 36124 = `8d1C`) |
 | 7-segment | `----` no result · `OPEn` / `CLSd` eye state · `tirE` DROWSY · `SLEP` MICROSLEEP (sequence mode) |
 | LEDs | `[3:0]` slot · `[4]` busy · `[5]` eye closed · `[6]` sequence mode · `[13:7]` PERCLOS bar · `[14]` DROWSY · `[15]` MICROSLEEP (blinks) |
+| `SW[6]` / `SW[7]` / `SW[8]` | buzzer test sound / active-module type / mute ([BUZZER.md](BUZZER.md)) |
+| Pmod JA1 | `buzzer_n` (active low): DROWSY 2 Hz beeps, MICROSLEEP 8 Hz beeps, AWAKE silent |
 
 Drowsiness rules = `python/drowsy_ref.py`: window 32 frames, DROWSY at ≥ 13 closed, back to AWAKE at ≤ 6,
 MICROSLEEP after 8 closed in a row, ends after 10 open in a row.

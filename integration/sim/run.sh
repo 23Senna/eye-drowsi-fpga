@@ -23,11 +23,12 @@ $PY ../scripts/gen_upload_vectors.py || exit 1
 declare -A SRC=(
   [tb_input_control]="$RTL/input_control.v"
   [tb_alert_control]="$RTL/alert_control.v"
+  [tb_buzzer_control]="$RTL/buzzer_control.v"
   [tb_drowsy_fsm]="$RTL/drowsy_fsm.v"
   [tb_roms]="$RTL/image_rom.v $RTL/weight_bias_rom.v"
   [tb_cnn_control]="$RTL/cnn_control.v"
-  [tb_top]="-DUSE_STUB $RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $RTL/image_rom.v $RTL/weight_bias_rom.v $RTL/cnn_core_stub.v"
-  [tb_top_real]="$RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $TEAM_SRC"
+  [tb_top]="-DUSE_STUB $RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $RTL/buzzer_control.v $RTL/image_rom.v $RTL/weight_bias_rom.v $RTL/cnn_core_stub.v"
+  [tb_top_real]="$RTL/drowsiness_top.v $RTL/input_control.v $RTL/drowsy_fsm.v $RTL/alert_control.v $RTL/buzzer_control.v $TEAM_SRC"
 )
 SERIAL=""; for m in uart_rx uart_tx uart_command uart_ascii_tx uart_monitor uart_image_rx; do SERIAL="$SERIAL $RTL/$m.v"; done
 SRC[tb_top]="${SRC[tb_top]} $SERIAL"
@@ -38,7 +39,7 @@ SRC[tb_uart_format]="$SERIAL"
 SRC[tb_uart_latency]="$SERIAL"
 SRC[tb_uart_system]="${SRC[tb_top_real]}"
 SRC[tb_uart_upload]="${SRC[tb_top_real]}"
-TBS="${*:-tb_input_control tb_alert_control tb_drowsy_fsm tb_roms tb_cnn_control tb_top tb_top_real tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system tb_uart_upload}"
+TBS="${*:-tb_input_control tb_alert_control tb_buzzer_control tb_drowsy_fsm tb_roms tb_cnn_control tb_top tb_top_real tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system tb_uart_upload}"
 
 fail=0
 for tb in $TBS; do
