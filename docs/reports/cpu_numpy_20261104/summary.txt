@@ -1,0 +1,8 @@
+CPU: AMD Ryzen 9 5900HS with Radeon Graphics
+NumPy integer CNN, batch 1
+CPU median: 152.800 us
+CPU p95: 226.700 us
+FPGA: 79.960 us (7996 cycles at 1e+08 Hz)
+CPU median / FPGA: 1.911x
+FPGA value uses previous telemetry; not a new board run.
+This is a NumPy int32 baseline, not a claim about optimized INT8 runtimes.

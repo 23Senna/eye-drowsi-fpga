@@ -1,5 +1,26 @@
 # Development Progress
 
+This is a dated journal, not the current status dashboard. Earlier pending
+statements apply to their sessions. See [current status](STATUS_AND_ISSUES.md).
+
+## 2026-11-04: Documentation and repository hygiene
+
+Updated current status, one host/GUI onboarding path, active interface and
+build-qualified results. Preserved superseded status/interface as archives,
+and original reports unchanged. Archived selected 9dac154 build reports;
+all 29 input hashes match reviewed main e3ac7ea. Operator confirms the
+integrated GUI passed; this is attestation without a new hardware capture.
+Recorded exact-integer CPU NumPy baseline (1.911x for that backend only).
+Added read-only CI for host/GUI/core checks and a Markdown-target/evidence-hash
+checker. Local validation: 30 host tests, dependency/import check, 28 Markdown
+file-target checks and 11 archived hashes PASS; separate-output Release GUI
+build/smoke PASS (normal executable was locked by the active user GUI).
+The benchmark smoke checks arithmetic only; the archived 25,000-sample run
+remains the reported timing result. Remote CI results are recorded on the PR.
+Excluded local editor/personal/temp paths from Git. No RTL/model arithmetic
+changes; no license selection or public release claimed.
+
+
 ## 2026-11-04: Team GUI integrated with validated live UART client
 
 Preserved local work on codex/live-webcam-gui and merged origin/main 7fced1e (team GUI 10 FPS, --quiet CLI, updated eye/eyebrow recorder). Resolved eye_capture.py preserving upstream --record/CAMERA status and the validated crop API, contrast and offset support. The Windows live button now runs one .venv-camera client with camera selection, left eye, 10 Hz target, Reyn crop, offset +0.10 and diagnostics. Replaced file-directory uploads with direct latest-frame/persistent-UART transport. GUI reads structured LIVE_EVENT messages, displays FPGA results and exact completed raw crop, updates frame ID, marks stale/gap status and supports idle-reset-resume. Stop/close sends STOP and drains the worker; 10-second fallback termination requires reset. The OpenCV camera/ROI windows remain separate from the Windows result/crop panel.

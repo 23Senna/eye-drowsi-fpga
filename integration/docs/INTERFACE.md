@@ -1,127 +1,75 @@
-# Interface contract v1 — drowsiness CNN on Basys3
+# Active interface — integrated eye-state system
 
-From the integration lead, 30 Oct 2026. **v1 follows the Python owner's model on Drive** (`eye-detection-1/
-quantize_export.py`, export of 29 Oct). It replaces v0 (16×16, one conv). Please reply with OK or changes.
+Reviewed 2026-11-04 against main e3ac7ea. The
+[original v1 proposal and annotations](archive/INTERFACE_V1_20261030.md)
+remain historical; cnn_control/cnn_core proposals do not describe the active
+filter-parallel datapath.
 
-## Global rules
+## Top and clock/reset
 
-- Verilog-2001, one module per file, must pass Icarus (`iverilog -g2012`) and Vivado 2025.2.1 (`xc7a35tcpg236-1`).
-- One clock, 100 MHz (`clk`). Synchronous, active-high `rst`.
-- `start` / `done` are **1-cycle pulses**. ROMs and buffers have a **1-cycle registered read**.
-- **FC class 0 = eye closed, class 1 = eye open** (Python `data.yaml`). Argmax tie → class 0 (numpy `argmax`).
-  System signal `eye_state`: 1 = closed, 0 = open, i.e. `eye_state = (logit0 >= logit1)`.
+Use integration/rtl/drowsiness_top.v, part xc7a35tcpg236-1. Default CLK_MHZ=100
+uses the board oscillator directly; CLK_MHZ=50 is a legacy MMCM option.
+btnU passes through input_control; active CNN rst is asynchronous active-high.
+Normal source build is scripts/build_uart.tcl from the repository root path
+`integration/scripts/build_uart.tcl`. UART is 115200 8N1; SW9 selects ownership.
 
-## Network and integer arithmetic (must be bit-exact with `quantize_export.forward`)
+## CNN and arithmetic
 
-| Step | Shape | Arithmetic |
-|---|---|---|
-| input | 1×24×24 | pixel uint8 0..255 (unsigned: multiply as `$signed({1'b0, pix})`) |
-| conv1 3×3, 4 filters | 4×22×22 | `acc = b1[f] + Σ pix·w1` (int8 weights, int32 bias) |
-| act + pool | 4×11×11 = **a1** | `clip(acc >>> 10, 0, 127)` (S1 = 10, floor shift), 2×2 max |
-| conv2 3×3, 4→8 | 8×9×9 | `acc = b2[f2] + Σ a1·w2` |
-| act + pool | 8×4×4 = **a2** (128) | `clip(acc >>> 6, 0, 127)` (S2 = 6), 2×2 max, **floor** (row/col 8 dropped) |
-| FC | 2 logits | `logit[c] = bf[c] + Σ a2[k]·wf[c][k]`, k = ch·16 + r·4 + c |
-
-Worst-case bounds from the exported weights: conv1 19 bit, conv2 18 bit, FC 20 bit → **24-bit signed
-accumulators and logits** are enough. Golden logits of the 16 demo images are within ±19k.
-
-## cnn_core (module `cnn_core`, file `cnn_core.v`)
-
-| Port | Dir | Width | Meaning |
-|---|---|---|---|
-| `clk`, `rst` | in | 1 | |
-| `start` | in | 1 | 1-cycle pulse; ignored while `busy` |
-| `busy` | out | 1 | high from the cycle after `start` until (and including) `done` |
-| `done` | out | 1 | 1-cycle pulse, result valid in this cycle |
-| `eye_state` | out | 1 | 1 = closed (`logit0 >= logit1`); valid at `done`, held until next `start` |
-| `logit0`, `logit1` | out | 24 signed | FC outputs (class 0 closed, class 1 open), held like `eye_state` |
-| `img_addr` / `img_data` | out / in | 14 / 8 | Image ROM. Core drives `img_addr[9:0] = row*24 + col`; top level supplies `[13:10]` = slot |
-| `w_addr` / `w_data` | out / in | 12 / 8 | Weight ROM, int8 |
-| `b_addr` / `b_data` | out / in | 5 / 32 | Bias ROM, int32 |
-
-`cnn_control.v` (integration, done) sequences everything with one MAC per cycle: **36,124 cycles ≈ 0.36 ms** per
-image. It drives the ROM addresses above, an activation buffer (`act_rd_addr` / `act_wr_addr`, a1 at 0–483,
-a2 at 512–639, 1 BRAM) and data-aligned strobes `layer, mac_en, mac_clr, mac_last, win_last, fc_class, argmax_en`
-(see the header of `rtl/cnn_control.v`). The Conv / ReLU_pool / fc_layer blocks plug into those strobes.
-`sim/tb_cnn_control.v` contains a behavioural datapath that already matches the Python golden for all 16 images —
-use it as the reference for your RTL.
-
-## Memories (`fpga/mem/`, one hex word per line, built by `scripts/gen_sim_data.py` from `mem/export/`)
-
-| File | Depth × width | Address / order |
-|---|---|---|
-| `images.mem` | 16384 × 8 | `{slot[3:0], pix[9:0]}`, 16 slots × 1024 words (576 px + zero pad) — Python export as is |
-| `weights.mem` | 580 × 8 | 0–35 conv1 `f*9+ky*3+kx` · 36–323 conv2 `36+f2*36+f1*9+ky*3+kx` · 324–579 FC `324+class*128+k` |
-| `biases.mem` | 14 × 32 | 0–3 conv1 · 4–11 conv2 · 12–13 FC |
-| `labels.mem` | 16 × 1 | ground-truth `eye_state` per slot (1 = closed) |
-| `stub_logits.mem` | 16 × 48 | `{logit0, logit1}` golden, used by `cnn_core_stub` |
-| `seq.mem` | 64 × 4 | slot order for sequence mode (only correctly classified slots) |
-
-Python owner: keep exporting `export/conv1_w … fc_b.mem`, `images.mem`, `expected*.txt/.mem`, `params.txt` in the
-current formats.
-
-**Taking a new export (retrain, new images, new S1/S2)** — no RTL edits:
-1. copy `conv1_w/b, conv2_w/b, fc_w/b.mem`, `images.mem`, `params.txt` → `fpga/mem/export/`;
-   `expected.txt`, `expected_a1.mem`, `expected_a2.mem` → `fpga/sim/vectors/`;
-2. `GEN=1 bash sim/run.sh` — rebuilds `mem/*.mem` and `rtl/model_params.vh` (`CNN_S1`, `CNN_S2`, `CNN_N_IMG`),
-   checks the integer model against `expected*`, then runs every testbench;
-3. rebuild in Vivado (`scripts/create_project.tcl`, `scripts/build.tcl`).
-Up to 16 images are supported (unused slots are padded black). The generator stops with a clear message if the
-network shape changes (filter counts, input size, layers) — that needs `cnn_control.v` / `weight_bias_rom.v` edits.
-Slots 0 and 1 are the two misclassified test images (label open → predicted closed, and the reverse).
-
-## Board I/O (Basys3)
-
-| Control | Function |
+| Interface | Contract |
 |---|---|
-| `btnU` | reset |
-| `btnC` | run one inference (manual mode) |
-| `SW[3:0]` | image slot 0–15 (manual mode) |
-| `SW[10]` | sequence scan: slots 0, 1, …, 15 in order instead of `seq.mem`; display shows the eye result |
-| `SW[11]` | sequence step: in sequence mode btnC advances one frame (no timer) |
-| `SW[12]` | sequence slow: 1 frame per second instead of 100 ms |
-| `SW[13]` | low-confidence hold (`|logit0 − logit1| < CONF_MARGIN` → keep previous eye state) |
-| `SW[14]` | sequence mode: one frame of `seq.mem` every 100 ms + drowsiness rules |
-| `SW[15]` | 7-segment shows the last latency in cycles (hex, 36124 = `8d1C`) |
-| 7-segment | `----` no result · `OPEn` / `CLSd` eye state · `tirE` DROWSY · `SLEP` MICROSLEEP (sequence mode) |
-| LEDs | `[3:0]` slot · `[4]` busy · `[5]` eye closed · `[6]` sequence mode · `[13:7]` PERCLOS bar · `[14]` DROWSY · `[15]` MICROSLEEP (blinks) |
-| `SW[6]` / `SW[7]` / `SW[8]` | buzzer test sound / active-module type / mute ([BUZZER.md](BUZZER.md)) |
-| Pmod JA1 | `buzzer_n` (active low): DROWSY 2 Hz beeps, MICROSLEEP 8 Hz beeps, AWAKE silent |
+| Module | rtl/cnn_top.v, EXTERNAL_INPUT parameter enables upload input |
+| clk/rst/start | clk, asynchronous active-high rst; start is one cycle, issued only when ready |
+| img_base_addr | 14-bit ROM slot base, slot * 1024 |
+| external_image | selects external input for this inference when enabled |
+| external_addr/data | 10-bit pixel read address, 8-bit unsigned pixel; one-clock synchronous-read contract |
+| done | one-cycle completion pulse; result valid at completion |
+| prediction | 1=OPEN iff logit1 > logit0, else 0=CLOSED |
+| logit0/logit1 | signed 32-bit; class 0=CLOSED, class 1=OPEN |
 
-Drowsiness rules = `python/drowsy_ref.py`: window 32 frames, DROWSY at ≥ 13 closed, back to AWAKE at ≤ 6,
-MICROSLEEP after 8 closed in a row, ends after 10 open in a row.
+Input 1x24x24 uint8 -> valid Conv3x3 1->4 -> shift10/ReLU/clip0..127 ->
+MaxPool2 (4x11x11) -> valid Conv3x3 4->8 -> shift6/ReLU/clip ->
+MaxPool2 floor (8x4x4) -> FC128->2 -> argmax. Weights int8, biases int32;
+flatten is channel*16 + row*4 + column. System eye_state reverses prediction:
+1=CLOSED. Ties classify CLOSED. Low-confidence hold (SW13) can preserve a
+previous temporal eye state; it does not change raw CNN logits.
 
-## Settled by the Python export (were open in v0)
-Requant = floor shift + clip [0,127] per layer (S1 = 10, S2 = 6; fixed-point export, `ml/export/params.txt`) · FC bias in product scale (add directly) ·
-`.mem` files come from the Python owner · 16 demo slots.
+ml/export/params.txt and weights/golden files define arithmetic. Change the
+export only with shift/shape compatibility checks and regenerated vectors.
+Run `GEN=1 bash integration/sim/run.sh` after an approved model update.
+[Memory layout and CNN details](../../docs/ARCHITECTURE.md).
 
-## Still open (TBD)
-1. **CNN Control owner** — `cnn_control.v` is written and verified; do the CNN teammates build their datapath on its
-   strobes, or bring their own control?
-2. **Class order** — keep FC class 0 = closed (current, `eye_state = logit0 >= logit1`), or swap in Python?
-3. **CONF_MARGIN** for the low-confidence hold (default 1024 logit units) — Python owner to suggest a value.
-4. **Datapath split** — one shared MAC (what `cnn_control` assumes) vs. separate conv / fc MACs.
+## Upload and result
 
-## Integration with the CNN team's core (30 Oct, repo `eye-drowsi-fpga`)
+[UART commands/ownership](UART.md) and [image upload](IMAGE_UPLOAD.md) are the
+protocol source of truth. LOAD/RUN_FRAME use four hexadecimal ID digits;
+replies report decimal IDs. Each valid image contains 576 row-major bytes
+plus CRC-16/CCITT-FALSE. Invalid/partial uploads cannot run. Only one
+transaction is outstanding; the live host keeps a latest-frame mailbox.
+Telemetry contains source, slot, raw class, warning, signed logits, cycles,
+integer us and uploaded frame_id. Integer us truncates cycles/CLK_MHZ:
+7,996 cycles at 100 MHz = 79.96 us, transmitted as us=79.
 
-The team delivered `rtl/cnn_top.v` + `rtl/rom_weights.v` (own ROMs incl. images). Since 2 Nov the core is
-pipelined (`conv1_layer` / `conv2_layer` / `fc_layer` + `mac_pipe`, synchronous buffer reads) and the export is fixed point
-(S1 = 10, S2 = 6). Since 4 Nov the layers are filter-parallel (4 / 8 / 2 `mac_pipe`, one tap per clock for all
-filters; `rom_weights` returns wide words: conv1 32 bit, conv2 64 bit, fc 16 bit).
-`drowsiness_top` instantiates it directly (stub only with `USE_STUB`); their files are used from their repo, not copied.
+## Board and temporal rules
 
-| cnn_top port | Use in drowsiness_top |
+| Control | Integrated behavior |
 |---|---|
-| `clk`, `rst` (async) | system clock, `rst` from input_control |
-| `start` | `cnn_start` pulse from drowsy_fsm |
-| `img_base_addr[13:0]` | `{img_slot, 10'b0}` (slot × 1024) |
-| `done` (1-cycle pulse) | `cnn_done` |
-| `prediction` (1 = open) | `eye_state = ~prediction` (tie → closed, same as numpy argmax) |
-| `logit0/1 [31:0]` | low-confidence check (32-bit in drowsy_fsm) |
+| btnU / btnC | reset / manual inference or sequence step |
+| SW3:0 / SW9 | ROM slot / board-down or PC-up ownership |
+| SW10 / SW11 / SW12 | sequence scan / step / slow |
+| SW13 / SW14 / SW15 | confidence hold / sequence / latency in decimal microseconds |
+| SW6 / SW7 / SW8 | buzzer test / type / mute |
+| JA1 | active-low buzzer output; [buzzer guide](BUZZER.md) |
 
-Verified: `sim/tb_top_real.v` — all 16 slots bit-exact vs the golden logits, 64 sequence frames vs `drowsy_ref`.
-Latency 7,996 cycles = 80.0 µs (SW15 shows `0079`). The 100 MHz board clock is used directly (`CLK_MHZ = 100`,
-no MMCM). 4 Nov build with UART + upload (`integration/scripts/build_uart.tcl`): WNS +1.201 ns, WHS +0.034 ns,
-2,351 LUT / 2,181 FF / 7.5 BRAM / 14 DSP (2 Nov serial-pipelined core without UART: WNS +2.385 ns, 601 LUT / 3 DSP).
-History: the first sequential one-MAC core needed 75,826 cycles and failed 100 MHz (WNS −6.58 ns), so it ran at 50 MHz
-through an MMCM; `CLK_MHZ = 50` still selects that path. `rtl/cnn_control.v` (BRAM-friendly, 1 MAC/cycle, 36,124 cycles) stays available as a reference.
+Temporal reference: integration/scripts/drowsy_ref.py. Window 32 observations,
+DROWSY at >=13 closed and recovery at <=6, MICROSLEEP after 8 consecutive
+closed and recovery after 10 consecutive open. These are observation counts,
+not sensor-time measurements. Live gaps require UART idle then operator reset;
+FPGA warnings may persist while host sending is paused.
+
+## Host boundary and evidence
+
+The Windows GUI uses tools/live_webcam.py with MediaPipe crop on the laptop;
+FPGA receives preprocessed pixels, not camera video. Default live settings and
+stop/resume procedures: [setup guide](../../docs/GETTING_STARTED.md).
+No GUI EAR heuristic substitutes for the FPGA CNN/temporal result.
+[Current results and build evidence](../../docs/STATUS_AND_ISSUES.md).

@@ -1,9 +1,18 @@
-# Vivado / simulator reports (kept for traceability)
+# Evidence index
+
+- [Current integrated FPGA build and GUI/host evidence](current_build_20261104/README.md).
+- [3 Nov UART implementation and physical fault-test archive](uart_image_upload_20261103/README.md).
+- [Current status](../STATUS_AND_ISSUES.md) defines which results apply now.
+
+- [CPU NumPy baseline report](cpu_numpy_20261104/report.json) and
+  [measurement method](../../integration/docs/INFERENCE_BENCHMARK.md); not a best-possible CPU comparison.
+
+## Historical original Vivado / simulator reports
 
 These come from the team's own Vivado 2024.2 run for part `xc7a35tcpg236-1` (Basys 3), at a 100 MHz clock constraint.
-They were produced **before** the current one-MAC RTL was restored (see
-`../STATUS_AND_ISSUES.md`) and do not describe the current `rtl/cnn_top.v`.
-The current one-MAC RTL has not been through Vivado yet.
+These files describe the original failing design, before the repaired and
+filter-parallel cores. They do not describe current rtl/cnn_top.v. The
+current integrated implementation reports are linked above.
 The timing report is trimmed to its summary and the worst setup path; the rest of the Vivado project (checkpoints, logs, waveform DB, bitstream) is intentionally not in the repo.
 
 | File | What it shows | Key numbers |

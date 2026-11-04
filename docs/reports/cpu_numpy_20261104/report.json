@@ -1,0 +1,91 @@
+{
+  "timestamp_utc": "2026-11-04T11:17:22.014609+00:00",
+  "cpu": "AMD Ryzen 9 5900HS with Radeon Graphics",
+  "os": "Windows-11-10.0.26220-SP0",
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "numpy": "1.26.4",
+  "power_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
+  "batch_size": 1,
+  "cpu_backend": "NumPy int32 matmul, vectorized patch packing",
+  "thread_environment": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "samples_per_repeat": 5000,
+  "repeats": 5,
+  "warmup": 300,
+  "correctness": {
+    "exported_inputs": 16,
+    "random_inputs": 64,
+    "exact_logits_match": true
+  },
+  "cpu_timing": {
+    "median_us": 152.8,
+    "p05_us": 141.1,
+    "p95_us": 226.7,
+    "min_us": 134.7,
+    "mean_us": 161.71588
+  },
+  "repeat_stats": [
+    {
+      "median_us": 152.2,
+      "p05_us": 141.4,
+      "p95_us": 201.705,
+      "min_us": 135.1,
+      "mean_us": 158.95162
+    },
+    {
+      "median_us": 151.4,
+      "p05_us": 142.1,
+      "p95_us": 237.90500000000003,
+      "min_us": 136.4,
+      "mean_us": 164.96596
+    },
+    {
+      "median_us": 152.4,
+      "p05_us": 139.8,
+      "p95_us": 187.01500000000004,
+      "min_us": 135.6,
+      "mean_us": 157.026
+    },
+    {
+      "median_us": 156.7,
+      "p05_us": 143.495,
+      "p95_us": 258.81000000000006,
+      "min_us": 134.7,
+      "mean_us": 173.59892000000002
+    },
+    {
+      "median_us": 152.2,
+      "p05_us": 139.8,
+      "p95_us": 166.2,
+      "min_us": 134.8,
+      "mean_us": 154.0369
+    }
+  ],
+  "checksum": 26060820,
+  "fpga": {
+    "cycles": 7996,
+    "clock_hz": 100000000,
+    "inference_us": 79.96,
+    "source": "Cycle count from previously validated FPGA telemetry, not a new physical measurement"
+  },
+  "speedup_cpu_median_over_fpga": 1.9109554777388698,
+  "export_sha256": {
+    "conv1_b.mem": "9ab27e5ab53fa116b456a2238c184295e83ddbb3051e3ecd46b174d5b19b8f5d",
+    "conv1_w.mem": "6f24cd593462abf348f071a88cb823e9446c9429346ec36b0d1fec113724c1fb",
+    "conv2_b.mem": "af65d982c0a19226061b9b53d380cfd92c55ad884428e8684f8eb909aaa2b650",
+    "conv2_w.mem": "9f7d39825bffb0ddefdd507c97ec9f634049bbbda7daaa6c7271c1a2ec57d960",
+    "fc_b.mem": "991522ff233ea900cbdd82395a0fba37351d0fcbf24f1506777877ba87e43b96",
+    "fc_w.mem": "482cb1568c8f18a3c51ecd55bcff8669fb6c9be550765d61a390adb2e714ac7b",
+    "images.mem": "cbd6eddcad1f1d9cbfba11fb767359004d795b2ee15c32cdf5e1e250e64c437a"
+  },
+  "limitations": [
+    "Exact numerical integer CNN baseline; not a native optimized INT8 runtime or best possible CPU performance.",
+    "CPU includes uint8->int32 conversion, patch packing, intermediate allocation and Python dispatch.",
+    "Both sides exclude image preprocessing, file loading, UART, display and model/weight initialization.",
+    "No CPU affinity or power/frequency lock; power mode and background workload affect results.",
+    "Speedup applies only to this backend and host configuration, not all software/CPUs."
+  ]
+}

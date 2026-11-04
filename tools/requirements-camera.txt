@@ -1,4 +1,2 @@
--r requirements.txt
-numpy
-opencv-python
-mediapipe==0.10.21
+# Compatibility alias for the supported Python 3.12 host environment.
+-r requirements-live.txt

@@ -1,0 +1,4 @@
+# Preserve byte hashes of selected archived evidence across Windows/Linux clones.
+*.rpt -text
+*.json -text
+*.txt -text

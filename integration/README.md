@@ -28,7 +28,7 @@ bash integration/sim/run.sh                 # all testbenches (first run generat
 GEN=1 bash integration/sim/run.sh           # regenerate after a new ml/export
 ```
 
-Expected: 12 × `PASS` (7 board-top + 5 UART testbenches); `tb_top_real` (~3 min) checks all 16 images bit-exact against `ml/export/expected.txt`,
+Expected: 14 testbenches selected by the current shell runner; `tb_top_real` (~3 min) checks all 16 images bit-exact against `ml/export/expected.txt`,
 64 sequence frames against `scripts/drowsy_ref.py` and the scan mode.
 
 Vivado (GUI): open/create a Basys3 project, then in the Tcl console
@@ -60,11 +60,15 @@ A buzzer on Pmod JA1 sounds the DROWSY / MICROSLEEP alarm: see [buzzer](docs/BUZ
 | SW14 | sequence mode (frames every 100 ms from `mem/seq.mem` + drowsiness rules) |
 | SW15 | show latency in µs |
 
-## Results (Vivado 2025.2.1, xc7a35tcpg236-1)
+## Current results and demo
 
-- Pipelined `cnn_top` (conv1/conv2/fc layers with `mac_pipe`): latency 7,996 cycles = 80 us at 100 MHz.
-- Fixed-point export S1 = 10, S2 = 6 (`ml/export/params.txt`); `scripts/gen_sim_data.py` stops if the `SHIFT` in
-  `rtl/conv1_layer.v` / `conv2_layer.v` differs.
-- 100 MHz, no MMCM (`CLK_MHZ = 100`): all constraints met (WNS +2.385 ns, WHS +0.091 ns; build without UART, 2 Nov).
-- 601 LUT, 700 FF, 6.5 BRAM, 3 DSP (img / a1 / a2 buffers are read synchronously -> block RAM).
-- The older one-MAC `cnn_top` needed 50 MHz (`CLK_MHZ = 50` puts an MMCM in front).
+The active real CNN takes 7,996 cycles = 79.96 us at 100 MHz (S1=10, S2=6).
+The full UART/upload/buzzer build at 9dac154 uses 2,376 LUT / 2,230 FF /
+7.5 BRAM / 14 DSP; setup +0.948 ns and hold +0.067 ns. See the
+[build-qualified evidence](../docs/reports/current_build_20261104/README.md).
+The older 2 Nov serial-pipelined/no-UART build had 601 LUT / 3 DSP and is
+historical, not the current resource count.
+
+For the current board/Windows GUI flow use [setup and demo](../docs/GETTING_STARTED.md).
+The source-driven integrated build command, from repo root, is
+`vivado -mode batch -source integration/scripts/build_uart.tcl`.

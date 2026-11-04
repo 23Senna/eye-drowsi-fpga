@@ -1,0 +1,1 @@
+PASS: GUI event/result/raw-preview/stale-resume/START-STOP process lifecycle; mock backend, no physical board/camera.
