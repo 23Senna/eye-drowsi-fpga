@@ -17,7 +17,7 @@ module tb_fc_layer #(
     wire [6:0] a2_addr;
     reg [7:0] a2_data;
     wire [6:0] w_addr;
-    reg signed [15:0] w_data;
+    reg signed [7:0] w_data0, w_data1;
     wire b_addr;
     reg signed [31:0] b_data;
     wire done;
@@ -33,14 +33,15 @@ module tb_fc_layer #(
     fc_layer dut (
         .clk(clk), .rst(rst), .start(start), .done(done),
         .a2_addr(a2_addr), .a2_data(a2_data),
-        .w_addr(w_addr), .w_data(w_data),
+        .w_addr(w_addr), .w_data0(w_data0), .w_data1(w_data1),
         .b_addr(b_addr), .b_data(b_data),
         .logit0(logit0), .logit1(logit1)
     );
 
     always @(posedge clk) begin
         a2_data <= a2_mem[IMAGE * 128 + a2_addr];
-        w_data  <= {weight_mem[128 + w_addr], weight_mem[w_addr]};
+        w_data0 <= weight_mem[w_addr];
+        w_data1 <= weight_mem[128 + w_addr];
         b_data  <= bias_mem[b_addr];
     end
 
@@ -86,7 +87,7 @@ module tb_fc_layer #(
         $display("FC image=%0d logit0=%0d logit1=%0d errors=%0d",
                  IMAGE, logit0, logit1, errors);
         if (errors != 0)
-            $display("*** TEST FAILED: tb_fc_layer ***");
+            $fatal(1, "*** TEST FAILED: tb_fc_layer ***");
         else
             $display("*** TEST PASSED: tb_fc_layer ***");
         $finish;

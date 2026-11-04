@@ -1,20 +1,30 @@
 `timescale 1ns / 1ps
 
-module tb_cnn;
+module tb_cnn #(
+    parameter integer EXTERNAL_INPUT = 0
+);
     reg clk;
     reg rst;
     reg start;
     reg [13:0] img_base_addr;
+    reg external_image;
+    wire [7:0] external_data;
+    wire [9:0] external_addr;
+    reg [7:0] image_mem [0:16383];
+    integer img_i;
 
     wire done;
     wire prediction;
     wire signed [31:0] logit0, logit1;
 
-    cnn_top uut (
+    cnn_top #(.EXTERNAL_INPUT(EXTERNAL_INPUT)) uut (
         .clk(clk),
         .rst(rst),
         .start(start),
         .img_base_addr(img_base_addr),
+        .external_image(external_image),
+        .external_addr(external_addr),
+        .external_data(external_data),
         .done(done),
         .prediction(prediction),
         .logit0(logit0),
@@ -23,7 +33,8 @@ module tb_cnn;
 
     always #5 clk = ~clk; // 100MHz clock
 
-    integer img_i;
+    assign external_data = image_mem[img_i * 1024 + external_addr];
+
     integer correct_count;
     integer errors;
     integer fd;
@@ -43,8 +54,12 @@ module tb_cnn;
         rst = 1;
         start = 0;
         img_base_addr = 0;
+        external_image = 0;
         correct_count = 0;
         errors = 0;
+        $readmemh("images.mem", image_mem);
+        if (EXTERNAL_INPUT != 0)
+            external_image = 1'b1;
 
         fd = $fopen("expected.txt", "r");
         if (fd == 0) $fatal(1, "missing expected.txt");
@@ -73,7 +88,7 @@ module tb_cnn;
         $display("====================================================");
 
         for (img_i = 0; img_i < 16; img_i = img_i + 1) begin
-            img_base_addr = img_i * 1024;
+            img_base_addr = (EXTERNAL_INPUT != 0) ? 14'd0 : img_i * 1024;
             #20;
             start = 1;
             #10;
@@ -119,8 +134,10 @@ module tb_cnn;
         $display("====================================================");
         if (errors == 0)
             $display("*** TEST PASSED: tb_cnn ***");
-        else
+        else begin
             $display("*** TEST FAILED: tb_cnn ***");
+            $fatal(1, "tb_cnn failed with %0d mismatches", errors);
+        end
         $display("====================================================");
         $finish;
     end

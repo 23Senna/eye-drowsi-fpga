@@ -18,7 +18,7 @@ module tb_conv1_layer #(
     wire [9:0] img_addr;
     reg [7:0] img_data;
     wire [3:0] w_addr;
-    reg signed [31:0] w_data;
+    reg signed [7:0] w_data0, w_data1, w_data2, w_data3;
     wire [1:0] b_addr;
     reg signed [31:0] b_data;
     wire done, a1_we;
@@ -34,7 +34,9 @@ module tb_conv1_layer #(
     conv1_layer dut (
         .clk(clk), .rst(rst), .start(start), .done(done),
         .img_addr(img_addr), .img_data(img_data),
-        .w_addr(w_addr), .w_data(w_data),
+        .w_addr(w_addr),
+        .w_data0(w_data0), .w_data1(w_data1),
+        .w_data2(w_data2), .w_data3(w_data3),
         .b_addr(b_addr), .b_data(b_data),
         .a1_we(a1_we), .a1_waddr(a1_waddr), .a1_wdata(a1_wdata)
     );
@@ -42,12 +44,10 @@ module tb_conv1_layer #(
     // Synchronous input memories, matching rom_weights.v.
     always @(posedge clk) begin
         img_data <= image_mem[IMAGE * 1024 + img_addr];
-        w_data   <= {
-            weight_mem[27 + w_addr],
-            weight_mem[18 + w_addr],
-            weight_mem[9  + w_addr],
-            weight_mem[w_addr]
-        };
+        w_data0  <= weight_mem[w_addr];
+        w_data1  <= weight_mem[9 + w_addr];
+        w_data2  <= weight_mem[18 + w_addr];
+        w_data3  <= weight_mem[27 + w_addr];
         b_data   <= bias_mem[b_addr];
         if (a1_we) begin
             got_mem[a1_waddr] <= a1_wdata;
@@ -84,7 +84,7 @@ module tb_conv1_layer #(
         end
         $display("L1 image=%0d writes=%0d errors=%0d", IMAGE, writes, errors);
         if (writes != 484 || errors != 0)
-            $display("*** TEST FAILED: tb_conv1_layer ***");
+            $fatal(1, "*** TEST FAILED: tb_conv1_layer ***");
         else
             $display("*** TEST PASSED: tb_conv1_layer ***");
         $finish;
