@@ -1,5 +1,11 @@
 # Development Progress
 
+## 2026-11-04: Team GUI integrated with validated live UART client
+
+Preserved local work on codex/live-webcam-gui and merged origin/main 7fced1e (team GUI 10 FPS, --quiet CLI, updated eye/eyebrow recorder). Resolved eye_capture.py preserving upstream --record/CAMERA status and the validated crop API, contrast and offset support. The Windows live button now runs one .venv-camera client with camera selection, left eye, 10 Hz target, Reyn crop, offset +0.10 and diagnostics. Replaced file-directory uploads with direct latest-frame/persistent-UART transport. GUI reads structured LIVE_EVENT messages, displays FPGA results and exact completed raw crop, updates frame ID, marks stale/gap status and supports idle-reset-resume. Stop/close sends STOP and drains the worker; 10-second fallback termination requires reset. The OpenCV camera/ROI windows remain separate from the Windows result/crop panel.
+
+Thirty Python host tests PASS. .NET 8 Release build PASS with zero warnings/errors using an isolated official SDK under build/dotnet-sdk. GUI bridge smoke PASS with a mock child backend (no physical camera/COM): exact crop/result rendering, frame-ID propagation, stale-result clearing, resume availability and START/STOP child lifecycle. Screenshot and smoke result retained under build/gui_integration. User previously reported good physical webcam results for the unchanged Reyn/+0.10 preprocessing; the newly integrated GUI still needs operator physical validation. No FPGA/weights/bitstream change and no push/PR performed in this task. Personal test3.jpg remains untracked and excluded from commits.
+
 ## 2026-11-04: Lower-eye context in live cropping
 
 At the operator's request, live reyn mode now shifts the ROI downward by 10% of the crop side to include more skin below the eye. Added --crop-offset-y (-0.5..0.5, positive down), preview and session metadata. Crop size, 24x24 output and contrast remapping are preserved. Other styles/standalone recorder keep zero default shift. Twenty-nine host tests PASS, including downward ROI translation and adjusted-pixel preservation into the UART mailbox. Actual framing remains for operator review.

@@ -127,6 +127,14 @@ recent send timestamps rather than showing inverse single-capture intervals.
 
 ## Reyn preprocessing on the UART path
 
+The Windows GUI's Start live 10 FPS now launches this same client with
+--gui-control and the validated settings. START/STOP commands arrive on stdin;
+LIVE_EVENT-prefixed JSON on stdout carries results/state/session metadata.
+EOF requests STOP. GUI stop/close drains the current transaction; an idle
+gap can be resumed only after the operator resets the board. OpenCV retains
+the live camera/ROI windows; the GUI shows exact completed input and FPGA
+results. See windows-app/README.md for the operator checklist.
+
 The live default is now --roi-style reyn. It calls the same crop_eye_brow
 function as the recorder, includes the eyebrow landmarks, uses padding 0.15
 and applies reduce_contrast exactly once after resize. Those resulting 576

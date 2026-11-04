@@ -7,6 +7,8 @@ import unittest
 from unittest.mock import patch
 from unittest.mock import Mock
 import threading
+import io
+from contextlib import redirect_stdout
 
 
 @unittest.skipUnless(importlib.util.find_spec('cv2') and importlib.util.find_spec('mediapipe'),
@@ -56,6 +58,32 @@ class PreviewTests(unittest.TestCase):
             self.assertEqual(events[0]['crop_offset_y'],.10)
             self.assertEqual(events[0]['contrast_levels'],[60,235])
         worker.close.assert_called_once()
+
+    def test_gui_stop_emits_json_and_closes_without_capturing(self):
+        import cv2
+        import mediapipe as mp
+        from live_webcam import main
+        camera=Mock()
+        camera.isOpened.return_value=True
+        mesh=Mock()
+        output=io.StringIO()
+        class ImmediateReader:
+            def __init__(self,target,**kwargs):self.target=target
+            def start(self):self.target()
+        with tempfile.TemporaryDirectory() as directory, redirect_stdout(output), \
+             patch('sys.stdin',io.StringIO('STOP\n')), \
+             patch('live_webcam.threading.Thread',ImmediateReader), \
+             patch.object(cv2,'VideoCapture',return_value=camera), \
+             patch.object(mp.solutions.face_mesh,'FaceMesh',return_value=mesh), \
+             patch.object(cv2,'namedWindow'), patch.object(cv2,'destroyAllWindows'):
+            self.assertEqual(main(['--preview-only','--gui-control','--log-dir',directory]),0)
+            camera.read.assert_not_called()
+            camera.release.assert_called_once()
+            mesh.close.assert_called_once()
+        events=[json.loads(line[11:]) for line in output.getvalue().splitlines() if line.startswith('LIVE_EVENT ')]
+        self.assertEqual(events[0]['event'],'session')
+        self.assertEqual(events[-1]['event'],'session_end')
+        self.assertEqual(events[-1]['exit_code'],0)
 
     def test_headless_preview_crops_and_never_opens_uart(self):
         import cv2

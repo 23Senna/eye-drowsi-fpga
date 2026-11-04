@@ -7,6 +7,7 @@ import queue
 from collections import deque
 import sys
 import time
+import threading
 from live_transport import Transport
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +28,7 @@ def main(argv=None):
     parser.add_argument('--pad',type=float,default=None,help='Extra square margin: defaults to 0.15 reyn, 0.35 legacy, 0.90 phone')
     parser.add_argument('--crop-offset-y',type=float,default=None,help='Vertical shift as fraction of crop side; positive down. Default 0.10 reyn, 0 other styles')
     parser.add_argument('--check',action='store_true',help='Check imports and versions without opening camera/serial')
+    parser.add_argument('--gui-control',action='store_true',help='GUI bridge: START/STOP on stdin; LIVE_EVENT JSON on stdout')
     parser.add_argument('--log-dir',type=Path,default=ROOT/'build/live_sessions')
     args=parser.parse_args(argv)
     if args.pad is None:args.pad={'reyn':0.15,'phone':0.90,'legacy':0.35}[args.roi_style]
@@ -74,10 +76,21 @@ def main(argv=None):
     golden_status=''
     sequence=0
     exit_code=0
+    commands=queue.SimpleQueue()
+    pending_start=False
+    previous_state=None
+    if args.gui_control:
+        def read_commands():
+            for line in sys.stdin:
+                commands.put(line.strip().upper())
+            commands.put('STOP')
+        threading.Thread(target=read_commands,daemon=True).start()
     def record(event):
         event={'wall_time':datetime.datetime.now().astimezone().isoformat(),**event}
         log.write(json.dumps(event)+'\n')
         log.flush()
+        if args.gui_control:
+            print('LIVE_EVENT '+json.dumps(event),flush=True)
     try:
         log=(session/'events.jsonl').open('w',encoding='utf-8')
         record({'event':'session','camera':args.camera,'backend':args.backend,'eye':args.eye,
@@ -104,6 +117,12 @@ def main(argv=None):
         window='Live eye -> Basys 3 | SPACE start/pause | Q quit'
         cv2.namedWindow(window,cv2.WINDOW_NORMAL)
         while True:
+            stop_requested=False
+            while not commands.empty():
+                command=commands.get()
+                if command=='STOP':stop_requested=True
+                elif command=='START' and not running:pending_start=True
+            if stop_requested:break
             ok,frame=cap.read()
             captured=time.monotonic()
             if not ok:
@@ -152,6 +171,11 @@ def main(argv=None):
             if running and found and not worker.error:
                 worker.mailbox.put(crop.tobytes(),captured,sequence,label)
             stale=not running or not found or now-last_result_capture>args.max_gap
+            state=(running,stale,found,status,worker.busy.is_set() if worker else False)
+            if state!=previous_state:
+                record({'event':'live_state','running':running,'stale':stale,'face_available':found,
+                        'status':status,'busy':state[4]})
+                previous_state=state
             detail='NO FRESH RESULT' if result is None or stale else f"#{result['frame_id']} {result['eye_class']} | {result['warning']} | CNN {result['us']} us"
             cv2.putText(frame,detail,(12,30),cv2.FONT_HERSHEY_SIMPLEX,0.65,(0,255,255),2)
             if worker is not None:
@@ -169,6 +193,8 @@ def main(argv=None):
             cv2.putText(frame,'LIVE' if running else status,(12,h-18),cv2.FONT_HERSHEY_SIMPLEX,0.45,(0,255,255),1)
             cv2.imshow(window,frame)
             key=cv2.waitKey(1)&0xff
+            if key!=ord('q') and pending_start and not running and found and worker is not None and worker.ready.is_set() and not worker.busy.is_set():
+                key=ord(' ');pending_start=False
             if args.diagnostics and key in (ord('o'),ord('c'),ord('u')):
                 label={ord('o'):'OPEN',ord('c'):'CLOSED',ord('u'):None}[key]
                 record({'event':'operator_label','label':label,'monotonic':time.monotonic()})
@@ -179,6 +205,7 @@ def main(argv=None):
                     running=False;worker.pause();status='PAUSED: reset btnU, then SPACE to resume'
                 elif found and worker.ready.is_set() and not worker.busy.is_set():
                     running=True;last_crop=last_result=now
+                    pending_start=False
                     worker.mailbox.clear();worker.enabled.set();status='LIVE'
                     send_times.clear()
                 record({'event':'operator_toggle','running':running,'monotonic':now,
