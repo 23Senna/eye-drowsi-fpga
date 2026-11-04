@@ -126,7 +126,7 @@ module tb_uart_upload;
             l0=logits[i][63:32];l1=logits[i][31:0];
             class_text=(l1>l0)?"OPEN":"CLOSED";
             case(warnings[i])0:warning_text="AWAKE";1:warning_text="DROWSY";2:warning_text="MICROSLEEP";default:$fatal(1,"bad warning");endcase
-            $sformat(expected,"RESULT source=UPLOAD slot=0 class=%0s warning=%0s logit0=%0d logit1=%0d cycles=37290 us=372 frame_id=%0d",class_text,warning_text,l0,l1,16'h1200+i);
+            $sformat(expected,"RESULT source=UPLOAD slot=0 class=%0s warning=%0s logit0=%0d logit1=%0d cycles=7996 us=79 frame_id=%0d",class_text,warning_text,l0,l1,16'h1200+i);
             expect_line(expected);quiet;
             $display("upload frame %0d: golden logits and temporal state match",i);
             command($sformatf("RUN_FRAME %04h\n",frameid));expect_line("ERR NOFRAME");quiet;

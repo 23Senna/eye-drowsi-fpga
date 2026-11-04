@@ -54,7 +54,7 @@ PC:   <576 binary pixels><CRC high byte><CRC low byte>
 FPGA: OK FRAME 4660
 PC:   RUN_FRAME 1234
 FPGA: OK RUN
-FPGA: RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=... logit1=... cycles=37290 us=372 frame_id=4660
+FPGA: RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=... logit1=... cycles=7996 us=79 frame_id=4660
 ```
 
 Wait for each complete acknowledgement. CRC is CRC-16/CCITT-FALSE over the
@@ -97,7 +97,7 @@ after validation. The first implementation uses one staging buffer, with
 no overlapping upload/inference. ROM mode remains the default for standalone
 cnn_top instances. Weights/biases stay in ROM.
 
-Payload transfer is 50 ms at 115200 8N1. Existing inference is about 0.373 ms;
+Payload transfer is 50 ms at 115200 8N1. Existing inference is about 0.080 ms;
 ASCII output adds roughly 10 ms. These are wire-time estimates, not measured
 end-to-end throughput. A host-paced 10 Hz demo is a reasonable starting point.
 `cycles/us` measure CNN/controller latency, excluding upload and serial output.

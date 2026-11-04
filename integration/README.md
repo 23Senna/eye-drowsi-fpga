@@ -61,7 +61,7 @@ The real CNN also accepts new 24x24 eye crops over UART: see [image upload](docs
 
 ## Results (Vivado 2025.2.1, xc7a35tcpg236-1)
 
-- Pipelined `cnn_top` (conv1/conv2/fc layers with `mac_pipe`): latency 37,290 cycles = 373 us at 100 MHz.
+- Pipelined `cnn_top` (conv1/conv2/fc layers with `mac_pipe`): latency 7,996 cycles = 80 us at 100 MHz.
 - Fixed-point export S1 = 10, S2 = 6 (`ml/export/params.txt`); `scripts/gen_sim_data.py` stops if the `SHIFT` in
   `rtl/conv1_layer.v` / `conv2_layer.v` differs.
 - 100 MHz, no MMCM (`CLK_MHZ = 100`): all constraints met (WNS +2.385 ns, WHS +0.091 ns; build without UART, 2 Nov).

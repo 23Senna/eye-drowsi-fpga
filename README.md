@@ -38,7 +38,7 @@ and hardware details.
 | int8 model accuracy | train 97.2% · valid 94.4% · **test 98.1%** (108 images) | Recomputed from `ml/export/*.mem` and `ml/*.npz` with the bit-exact NumPy model |
 | RTL vs. golden model | **16/16 logit pairs identical** (`rtl/cnn_top.v`) | Icarus Verilog via `./run_sim.sh` |
 | Unit tests | All pass with 0 errors | `./run_sim.sh` |
-| Latency | 37,290 cycles/image = 373 µs at 100 MHz | Pipelined layers (`conv1_layer`, `conv2_layer`, `fc_layer` with `mac_pipe`); measured by simulation |
+| Latency | 7,996 cycles/image = 80 µs at 100 MHz | Pipelined layers (`conv1_layer`, `conv2_layer`, `fc_layer` with `mac_pipe`); measured by simulation |
 | Resources | 601 LUT, 700 FF, 6.5 BRAM, 3 DSP | Vivado 2025.2.1, full board top `integration/` `drowsiness_top` incl. `cnn_top` (2 Nov, without UART) |
 | **Timing at 100 MHz** | **Met: WNS +2.385 ns, WHS +0.091 ns** | Same build; 100 MHz board clock used directly, no MMCM |
 
