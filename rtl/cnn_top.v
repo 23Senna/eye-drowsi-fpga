@@ -3,16 +3,20 @@
 // cnn_top : structural top
 //
 //   rom_weights --> conv1_layer --> conv2_layer --> fc_layer
-//                    (mac_unit, relu_requant, maxpool2x2 inside each conv layer)
+//                    (mac_pipe, relu_requant, maxpool2x2 inside each conv layer)
+//   Filter-parallel version: conv1 = 4 MAC, conv2 = 8 MAC, fc = 2 MAC (14 DSP).
 //
 // Top only owns: image loader, the three buffers (img / a1 / a2),
 //                the ROM instance, and a small sequencing FSM.
 //==============================================================================
-module cnn_top (
+module cnn_top #(parameter EXTERNAL_INPUT = 0) (
     input clk,
     input rst,
     input start,
     input [13:0] img_base_addr,
+    input external_image,
+    output wire [9:0] external_addr,
+    input [7:0] external_data,
     output reg done,
     output reg prediction,      // 0: Closed, 1: Open
     output signed [31:0] logit0,
@@ -38,6 +42,7 @@ module cnn_top (
 
     reg [3:0] state;
     reg [9:0] load_cnt;
+    reg external_q;
 
     // layer handshakes
     wire l1_start = (state == ST_L1_GO);
@@ -46,29 +51,39 @@ module cnn_top (
     wire l1_done, l2_done, fc_done;
 
     // ---------------- ROM
-    wire [3:0]  c1_w_addr;  wire signed [31:0] c1_w_data;
+    // weight ROMs are filter-parallel: one shared tap address, one int8 port per filter/class
+    wire [3:0]  c1_w_addr;  wire signed [7:0] c1_w0, c1_w1, c1_w2, c1_w3;
     wire [1:0]  c1_b_addr;  wire signed [31:0] c1_b_data;
-    wire [5:0]  c2_w_addr;  wire signed [63:0] c2_w_data;
+    wire [5:0]  c2_w_addr;  wire signed [7:0] c2_w0, c2_w1, c2_w2, c2_w3,
+                                              c2_w4, c2_w5, c2_w6, c2_w7;
     wire [2:0]  c2_b_addr;  wire signed [31:0] c2_b_data;
-    wire [6:0]  fc_w_addr;  wire signed [15:0] fc_w_data;
+    wire [6:0]  fc_w_addr;  wire signed [7:0] fc_w0, fc_w1;
     wire        fc_b_addr;  wire signed [31:0] fc_b_data;
     reg  [13:0] rom_img_addr;
+    assign external_addr = rom_img_addr[9:0];
     wire [7:0]  rom_img_data;
 
     rom_weights rom_inst (
         .clk(clk),
-        .conv1_w_addr(c1_w_addr), .conv1_w_data(c1_w_data),
+        .conv1_w_addr(c1_w_addr),
+        .conv1_w0_data(c1_w0), .conv1_w1_data(c1_w1),
+        .conv1_w2_data(c1_w2), .conv1_w3_data(c1_w3),
         .conv1_b_addr(c1_b_addr), .conv1_b_data(c1_b_data),
-        .conv2_w_addr(c2_w_addr), .conv2_w_data(c2_w_data),
+        .conv2_w_addr(c2_w_addr),
+        .conv2_w0_data(c2_w0), .conv2_w1_data(c2_w1),
+        .conv2_w2_data(c2_w2), .conv2_w3_data(c2_w3),
+        .conv2_w4_data(c2_w4), .conv2_w5_data(c2_w5),
+        .conv2_w6_data(c2_w6), .conv2_w7_data(c2_w7),
         .conv2_b_addr(c2_b_addr), .conv2_b_data(c2_b_data),
-        .fc_w_addr(fc_w_addr),    .fc_w_data(fc_w_data),
+        .fc_w_addr(fc_w_addr),
+        .fc_w0_data(fc_w0), .fc_w1_data(fc_w1),
         .fc_b_addr(fc_b_addr),    .fc_b_data(fc_b_data),
         .img_addr(rom_img_addr),  .img_data(rom_img_data)
     );
 
     // ---------------- Layer 1
     wire [9:0] l1_img_addr;
-    reg  [7:0] l1_img_data;
+    reg  [7:0] l1_img_data;     // sync read: data 1 clock after the address (layer contract)
     wire       a1_we;
     wire [8:0] a1_waddr;
     wire [7:0] a1_wdata;
@@ -76,14 +91,15 @@ module cnn_top (
     conv1_layer u_conv1 (
         .clk(clk), .rst(rst), .start(l1_start), .done(l1_done),
         .img_addr(l1_img_addr), .img_data(l1_img_data),
-        .w_addr(c1_w_addr), .w_data(c1_w_data),
+        .w_addr(c1_w_addr),
+        .w_data0(c1_w0), .w_data1(c1_w1), .w_data2(c1_w2), .w_data3(c1_w3),
         .b_addr(c1_b_addr), .b_data(c1_b_data),
         .a1_we(a1_we), .a1_waddr(a1_waddr), .a1_wdata(a1_wdata)
     );
 
     // ---------------- Layer 2
     wire [8:0] l2_a1_addr;
-    reg  [7:0] l2_a1_data;
+    reg  [7:0] l2_a1_data;      // sync read
     wire       a2_we;
     wire [6:0] a2_waddr;
     wire [7:0] a2_wdata;
@@ -91,29 +107,37 @@ module cnn_top (
     conv2_layer u_conv2 (
         .clk(clk), .rst(rst), .start(l2_start), .done(l2_done),
         .a1_addr(l2_a1_addr), .a1_data(l2_a1_data),
-        .w_addr(c2_w_addr), .w_data(c2_w_data),
+        .w_addr(c2_w_addr),
+        .w_data0(c2_w0), .w_data1(c2_w1), .w_data2(c2_w2), .w_data3(c2_w3),
+        .w_data4(c2_w4), .w_data5(c2_w5), .w_data6(c2_w6), .w_data7(c2_w7),
         .b_addr(c2_b_addr), .b_data(c2_b_data),
         .a2_we(a2_we), .a2_waddr(a2_waddr), .a2_wdata(a2_wdata)
     );
 
     // ---------------- FC
     wire [6:0] fc_a2_addr;
-    reg  [7:0] fc_a2_data;
+    reg  [7:0] fc_a2_data;      // sync read
 
     fc_layer u_fc (
         .clk(clk), .rst(rst), .start(fc_start), .done(fc_done),
         .a2_addr(fc_a2_addr), .a2_data(fc_a2_data),
-        .w_addr(fc_w_addr), .w_data(fc_w_data),
+        .w_addr(fc_w_addr),
+        .w_data0(fc_w0), .w_data1(fc_w1),
         .b_addr(fc_b_addr), .b_data(fc_b_data),
         .logit0(logit0), .logit1(logit1)
     );
 
-    // ---------------- Buffer writes
+    // ---------------- Buffer reads (synchronous, like rom_weights: the layers'
+    // pipelines expect img/a1/a2 data one clock after the address, together with w_data)
     always @(posedge clk) begin
         l1_img_data <= img_mem[l1_img_addr];
         l2_a1_data  <= a1_mem[l2_a1_addr];
         fc_a2_data  <= a2_mem[fc_a2_addr];
-        if (state == ST_LOAD_RD) img_mem[load_cnt] <= rom_img_data;
+    end
+
+    // ---------------- Buffer writes
+    always @(posedge clk) begin
+        if (state == ST_LOAD_RD) img_mem[load_cnt] <= external_q ? external_data : rom_img_data;
         if (a1_we)               a1_mem[a1_waddr]  <= a1_wdata;
         if (a2_we)               a2_mem[a2_waddr]  <= a2_wdata;
     end
@@ -125,11 +149,13 @@ module cnn_top (
             done       <= 1'b0;
             prediction <= 1'b0;
             load_cnt   <= 10'd0;
+            external_q <= 1'b0;
         end else begin
             case (state)
                 ST_IDLE: begin
                     done <= 1'b0;
                     if (start) begin
+                        external_q <= EXTERNAL_INPUT ? external_image : 1'b0;
                         load_cnt     <= 10'd0;
                         rom_img_addr <= img_base_addr;
                         state        <= ST_LOAD_REQ;

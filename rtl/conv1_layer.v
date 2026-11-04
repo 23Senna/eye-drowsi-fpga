@@ -6,8 +6,8 @@
 //
 // All 4 filters are computed at the same time (4 mac_pipe). Every filter sees the
 // SAME input pixel in the same clock, so the image memory is still read with ONE
-// address per clock (no banking / line buffer needed). Only the weight ROM word
-// is 4 x int8 wide: w_data = {w_f3, w_f2, w_f1, w_f0} for the current tap.
+// address per clock (no banking / line buffer needed). The weight ROM has one
+// shared tap address (w_addr) and one int8 port per filter (w_data0..w_data3).
 //
 // Start-up: the 4 biases are read once (b_addr 0..3) into local registers, then
 // the tap generator is released.
@@ -32,8 +32,11 @@ module conv1_layer (
     output reg [9:0]       img_addr,
     input  [7:0]           img_data,
 
-    output reg [3:0]       w_addr,       // tap index 0..8
-    input  [31:0]          w_data,       // {w_f3, w_f2, w_f1, w_f0}
+    output reg [3:0]       w_addr,       // tap index 0..8 (shared by all filters)
+    input  signed [7:0]    w_data0,      // int8 weight, filter 0
+    input  signed [7:0]    w_data1,      // filter 1
+    input  signed [7:0]    w_data2,      // filter 2
+    input  signed [7:0]    w_data3,      // filter 3
     output reg [1:0]       b_addr,
     input  signed [31:0]   b_data,
 
@@ -128,12 +131,13 @@ module conv1_layer (
     end
 
     // ---------------- NF parallel MACs (data valid in cycle 3 with tag t3)
+    wire [8*NF-1:0]  w_bus = {w_data3, w_data2, w_data1, w_data0};
     wire [32*NF-1:0] acc_bus;
     genvar i;
     generate
         for (i = 0; i < NF; i = i + 1) begin : g_mac
             mac_pipe u_mac (
-                .clk(clk), .a(img_data), .w(w_data[8*i +: 8]),
+                .clk(clk), .a(img_data), .w(w_bus[8*i +: 8]),
                 .bias(bias_bus[32*i +: 32]),
                 .first(t3[3]), .acc(acc_bus[32*i +: 32])
             );

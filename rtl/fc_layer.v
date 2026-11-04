@@ -4,7 +4,7 @@
 //   logit[c] = bias[c] + sum_i a2[i] * w[c*128 + i]
 //
 // Both classes are computed at the same time (2 mac_pipe) from the same a2[i];
-// w_data = {w_class1[i], w_class0[i]}. 128 taps instead of 256.
+// w_data0 / w_data1 = int8 weight of class 0 / 1 at tap i. 128 taps instead of 256.
 // The 2 biases are read once (b_addr 0..1) into local registers at start.
 //
 //   0 counters | 1 address regs | 2 memory/ROM data (sync read) -> mac_pipe
@@ -19,8 +19,9 @@ module fc_layer (
     output reg [6:0]           a2_addr,
     input  [7:0]               a2_data,
 
-    output reg [6:0]           w_addr,      // i = 0..127
-    input  [15:0]              w_data,      // {w_class1, w_class0}
+    output reg [6:0]           w_addr,      // i = 0..127 (shared by both classes)
+    input  signed [7:0]        w_data0,     // int8 weight, class 0
+    input  signed [7:0]        w_data1,     // int8 weight, class 1
     output reg                 b_addr,
     input  signed [31:0]       b_data,
 
@@ -87,12 +88,13 @@ module fc_layer (
     end
 
     // ---------------- NF parallel MACs (data valid in cycle 2 with tag t2)
+    wire [8*NF-1:0]  w_bus = {w_data1, w_data0};
     wire [32*NF-1:0] acc_bus;
     genvar i;
     generate
         for (i = 0; i < NF; i = i + 1) begin : g_mac
             mac_pipe u_mac (
-                .clk(clk), .a(a2_data), .w(w_data[8*i +: 8]),
+                .clk(clk), .a(a2_data), .w(w_bus[8*i +: 8]),
                 .bias(bias_bus[32*i +: 32]),
                 .first(t2[1]), .acc(acc_bus[32*i +: 32])
             );
