@@ -3,20 +3,20 @@
 module rom_weights (
     input clk,
     // Conv1 ROM
-    input  [5:0]  conv1_w_addr,
-    output reg signed [7:0] conv1_w_data,
+    input  [3:0]  conv1_w_addr,
+    output reg signed [31:0] conv1_w_data,
     input  [1:0]  conv1_b_addr,
     output reg signed [31:0] conv1_b_data,
 
     // Conv2 ROM
-    input  [8:0]  conv2_w_addr,
-    output reg signed [7:0] conv2_w_data,
+    input  [5:0]  conv2_w_addr,
+    output reg signed [63:0] conv2_w_data,
     input  [2:0]  conv2_b_addr,
     output reg signed [31:0] conv2_b_data,
 
     // FC ROM
-    input  [7:0]  fc_w_addr,
-    output reg signed [7:0] fc_w_data,
+    input  [6:0]  fc_w_addr,
+    output reg signed [15:0] fc_w_data,
     input         fc_b_addr,
     output reg signed [31:0] fc_b_data,
 
@@ -44,11 +44,25 @@ module rom_weights (
     end
 
     always @(posedge clk) begin
-        conv1_w_data <= conv1_w[conv1_w_addr];
+        conv1_w_data <= {
+            conv1_w[27 + conv1_w_addr],
+            conv1_w[18 + conv1_w_addr],
+            conv1_w[9  + conv1_w_addr],
+            conv1_w[conv1_w_addr]
+        };
         conv1_b_data <= conv1_b[conv1_b_addr];
-        conv2_w_data <= conv2_w[conv2_w_addr];
+        conv2_w_data <= {
+            conv2_w[252 + conv2_w_addr],
+            conv2_w[216 + conv2_w_addr],
+            conv2_w[180 + conv2_w_addr],
+            conv2_w[144 + conv2_w_addr],
+            conv2_w[108 + conv2_w_addr],
+            conv2_w[72  + conv2_w_addr],
+            conv2_w[36  + conv2_w_addr],
+            conv2_w[conv2_w_addr]
+        };
         conv2_b_data <= conv2_b[conv2_b_addr];
-        fc_w_data    <= fc_w[fc_w_addr];
+        fc_w_data    <= {fc_w[128 + fc_w_addr], fc_w[fc_w_addr]};
         fc_b_data    <= fc_b[fc_b_addr];
         img_data     <= images[img_addr];
     end

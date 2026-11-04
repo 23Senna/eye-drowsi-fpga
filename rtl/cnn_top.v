@@ -46,11 +46,11 @@ module cnn_top (
     wire l1_done, l2_done, fc_done;
 
     // ---------------- ROM
-    wire [5:0]  c1_w_addr;  wire signed [7:0]  c1_w_data;
+    wire [3:0]  c1_w_addr;  wire signed [31:0] c1_w_data;
     wire [1:0]  c1_b_addr;  wire signed [31:0] c1_b_data;
-    wire [8:0]  c2_w_addr;  wire signed [7:0]  c2_w_data;
+    wire [5:0]  c2_w_addr;  wire signed [63:0] c2_w_data;
     wire [2:0]  c2_b_addr;  wire signed [31:0] c2_b_data;
-    wire [7:0]  fc_w_addr;  wire signed [7:0]  fc_w_data;
+    wire [6:0]  fc_w_addr;  wire signed [15:0] fc_w_data;
     wire        fc_b_addr;  wire signed [31:0] fc_b_data;
     reg  [13:0] rom_img_addr;
     wire [7:0]  rom_img_data;
@@ -68,7 +68,7 @@ module cnn_top (
 
     // ---------------- Layer 1
     wire [9:0] l1_img_addr;
-    wire [7:0] l1_img_data = img_mem[l1_img_addr];
+    reg  [7:0] l1_img_data;
     wire       a1_we;
     wire [8:0] a1_waddr;
     wire [7:0] a1_wdata;
@@ -83,7 +83,7 @@ module cnn_top (
 
     // ---------------- Layer 2
     wire [8:0] l2_a1_addr;
-    wire [7:0] l2_a1_data = a1_mem[l2_a1_addr];
+    reg  [7:0] l2_a1_data;
     wire       a2_we;
     wire [6:0] a2_waddr;
     wire [7:0] a2_wdata;
@@ -98,7 +98,7 @@ module cnn_top (
 
     // ---------------- FC
     wire [6:0] fc_a2_addr;
-    wire [7:0] fc_a2_data = a2_mem[fc_a2_addr];
+    reg  [7:0] fc_a2_data;
 
     fc_layer u_fc (
         .clk(clk), .rst(rst), .start(fc_start), .done(fc_done),
@@ -110,6 +110,9 @@ module cnn_top (
 
     // ---------------- Buffer writes
     always @(posedge clk) begin
+        l1_img_data <= img_mem[l1_img_addr];
+        l2_a1_data  <= a1_mem[l2_a1_addr];
+        fc_a2_data  <= a2_mem[fc_a2_addr];
         if (state == ST_LOAD_RD) img_mem[load_cnt] <= rom_img_data;
         if (a1_we)               a1_mem[a1_waddr]  <= a1_wdata;
         if (a2_we)               a2_mem[a2_waddr]  <= a2_wdata;

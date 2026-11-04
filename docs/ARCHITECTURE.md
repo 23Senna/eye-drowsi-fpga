@@ -46,12 +46,15 @@ basys3_wrapper ── btnR → rising-edge → start
       └── seven_seg_drive ── "----" while busy, "OPN " / "CLSD" when done
 ```
 
-* Each layer has its own pipelined multiply-accumulate (`mac_pipe`), reused
-  for every output position and filter of that layer; the layers run one after
-  the other (37,290 cycles per image, 373 µs at 100 MHz).
+* Each layer has its own pipelined multiply-accumulate lanes (`mac_pipe`):
+  conv1 computes 4 filters in parallel, conv2 computes 8 filters in parallel,
+  and FC computes both classes in parallel. The layers still run one after the
+  other (37,290 cycles per image, 373 µs at 100 MHz); parallel lanes reduce
+  the number of taps per output rather than changing the layer sequencing.
 * `rom_weights.v` reads the exported `.mem` files through synchronous ROM
-  ports. The layer buffers are written one value at a time instead of being
-  transferred as large packed vectors.
+  ports and packs all filter/class lanes for the current tap into one word
+  (`conv1=32`, `conv2=64`, `fc=16` bits). The layer buffers are written one
+  value at a time instead of being transferred as large packed vectors.
 * The img / a1 / a2 buffers are read synchronously (one clock after the
   address), so Vivado maps them to block RAM and the core meets 100 MHz:
   WNS +2.385 ns, 601 LUT / 700 FF / 6.5 BRAM / 3 DSP for the whole

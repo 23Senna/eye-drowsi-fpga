@@ -16,8 +16,8 @@ module tb_fc_layer #(
 
     wire [6:0] a2_addr;
     reg [7:0] a2_data;
-    wire [7:0] w_addr;
-    reg signed [7:0] w_data;
+    wire [6:0] w_addr;
+    reg signed [15:0] w_data;
     wire b_addr;
     reg signed [31:0] b_data;
     wire done;
@@ -40,7 +40,7 @@ module tb_fc_layer #(
 
     always @(posedge clk) begin
         a2_data <= a2_mem[IMAGE * 128 + a2_addr];
-        w_data  <= weight_mem[w_addr];
+        w_data  <= {weight_mem[128 + w_addr], weight_mem[w_addr]};
         b_data  <= bias_mem[b_addr];
     end
 

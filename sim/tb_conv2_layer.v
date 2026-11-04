@@ -16,8 +16,8 @@ module tb_conv2_layer #(
 
     wire [8:0] a1_addr;
     reg [7:0] a1_data;
-    wire [8:0] w_addr;
-    reg signed [7:0] w_data;
+    wire [5:0] w_addr;
+    reg signed [63:0] w_data;
     wire [2:0] b_addr;
     reg signed [31:0] b_data;
     wire done, a2_we;
@@ -40,7 +40,16 @@ module tb_conv2_layer #(
 
     always @(posedge clk) begin
         a1_data <= a1_mem[IMAGE * 484 + a1_addr];
-        w_data  <= weight_mem[w_addr];
+        w_data  <= {
+            weight_mem[252 + w_addr],
+            weight_mem[216 + w_addr],
+            weight_mem[180 + w_addr],
+            weight_mem[144 + w_addr],
+            weight_mem[108 + w_addr],
+            weight_mem[72  + w_addr],
+            weight_mem[36  + w_addr],
+            weight_mem[w_addr]
+        };
         b_data  <= bias_mem[b_addr];
         if (a2_we) begin
             got_mem[a2_waddr] <= a2_wdata;

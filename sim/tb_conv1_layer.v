@@ -17,8 +17,8 @@ module tb_conv1_layer #(
 
     wire [9:0] img_addr;
     reg [7:0] img_data;
-    wire [5:0] w_addr;
-    reg signed [7:0] w_data;
+    wire [3:0] w_addr;
+    reg signed [31:0] w_data;
     wire [1:0] b_addr;
     reg signed [31:0] b_data;
     wire done, a1_we;
@@ -42,7 +42,12 @@ module tb_conv1_layer #(
     // Synchronous input memories, matching rom_weights.v.
     always @(posedge clk) begin
         img_data <= image_mem[IMAGE * 1024 + img_addr];
-        w_data   <= weight_mem[w_addr];
+        w_data   <= {
+            weight_mem[27 + w_addr],
+            weight_mem[18 + w_addr],
+            weight_mem[9  + w_addr],
+            weight_mem[w_addr]
+        };
         b_data   <= bias_mem[b_addr];
         if (a1_we) begin
             got_mem[a1_waddr] <= a1_wdata;
