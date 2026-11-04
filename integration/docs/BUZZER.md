@@ -51,3 +51,4 @@ pin 1 vs pin 5/6, try the other SW7 position; too quiet (passive) → change `TO
 `buzzer_control.v`, the loudest point is the module's resonance.
 
 Simulation: `bash sim/run.sh tb_buzzer_control` (envelopes, tone period, active / mute / test).
+Board test (Basys3 + MH-FMD, 4 Nov): PASS.
