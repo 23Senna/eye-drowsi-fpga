@@ -1,4 +1,4 @@
 # Preserve byte hashes of selected archived evidence across Windows/Linux clones.
-*.rpt -text
-*.json -text
-*.txt -text
+*.rpt -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+*.json -text whitespace=cr-at-eol
+*.txt -text whitespace=cr-at-eol
