@@ -1,0 +1,5 @@
+# Python 3.12 environment, isolated from the existing Python 3.14 UART venv.
+pyserial==3.5
+numpy==1.26.4
+opencv-contrib-python==4.11.0.86
+mediapipe==0.10.21

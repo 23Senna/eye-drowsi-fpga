@@ -2,6 +2,8 @@
 build/
 windows-app/bin/
 windows-app/obj/
+tools/gui-smoke/bin/
+tools/gui-smoke/obj/
 eye_dataset/
 *.vvp
 *.vcd
@@ -35,6 +37,7 @@ integration/vivado/
 integration/reports/
 
 .venv/
+.venv-camera/
 
 /clockInfo.txt
 

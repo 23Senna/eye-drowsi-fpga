@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace EyeDrowsinessControl;
 
@@ -23,7 +24,12 @@ public sealed class MainForm : Form
     private CancellationTokenSource? operationCancellation;
     private Image? previewImage;
     private Process? captureProcess;
-    private CancellationTokenSource? liveCancellation;
+    private Process? liveProcess;
+    private readonly NumericUpDown cameraBox = new() { Minimum = 0, Maximum = 10, Width = 80 };
+    private readonly Button resumeLiveButton = new() { Text = "Resume live", AutoSize = true };
+    private bool liveStopping;
+    private bool closingAfterLive;
+    private bool cliBusy;
     private Task? liveTask;
     private string cameraStatus = "Camera: waiting";
     private string fpgaStatus = "FPGA: waiting";
@@ -32,13 +38,23 @@ public sealed class MainForm : Form
     {
         repositoryRoot = FindRepositoryRoot();
         Text = "Eye Drowsiness  |  Basys 3 Control";
-        MinimumSize = new Size(920, 620);
-        Size = new Size(1060, 700);
+        MinimumSize = new Size(1040, 760);
+        Size = new Size(1180, 820);
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Color.FromArgb(245, 247, 250);
         Font = new Font("Segoe UI", 9F);
 
         BuildLayout();
+        FormClosing += async (_, e) =>
+        {
+            if (liveProcess is not null && !closingAfterLive)
+            {
+                e.Cancel = true;
+                await StopLiveAsync();
+                closingAfterLive = true;
+                Close();
+            }
+        };
         captureRefreshTimer.Tick += (_, _) => LoadCapturedImages();
         LoadPorts();
         UpdateActionState();
@@ -49,7 +65,7 @@ public sealed class MainForm : Form
         if (disposing)
         {
             operationCancellation?.Cancel();
-            liveCancellation?.Cancel();
+            if (liveProcess is { HasExited: false }) liveProcess.Kill(entireProcessTree: true);
             StopCaptureProcess();
             captureRefreshTimer.Stop();
             previewImage?.Dispose();
@@ -94,10 +110,10 @@ public sealed class MainForm : Form
         var setupGrid = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
-            Height = 190,
+            Height = 226,
             Padding = new Padding(4, 2, 4, 0),
             ColumnCount = 3,
-            RowCount = 5
+            RowCount = 6
         };
         setupGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 115));
         setupGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -116,7 +132,7 @@ public sealed class MainForm : Form
         setupGrid.Controls.Add(FieldLabel("Frame ID"), 0, 1);
         frameBox.Minimum = 0;
         frameBox.Maximum = 65535;
-        frameBox.Value = 1;
+        frameBox.Value = 12000;
         frameBox.Dock = DockStyle.Left;
         frameBox.Width = 130;
         setupGrid.Controls.Add(frameBox, 1, 1);
@@ -143,6 +159,11 @@ public sealed class MainForm : Form
         captureButton.Height = 30;
         captureButton.Click += async (_, _) => await ToggleCaptureAsync();
         setupGrid.Controls.Add(captureButton, 1, 4);
+        resumeLiveButton.Enabled = false;
+        resumeLiveButton.Click += async (_, _) => await SendLiveCommandAsync("START");
+        setupGrid.Controls.Add(resumeLiveButton, 2, 4);
+        setupGrid.Controls.Add(FieldLabel("Camera index"), 0, 5);
+        setupGrid.Controls.Add(cameraBox, 1, 5);
 
         var actions = new FlowLayoutPanel
         {
@@ -169,7 +190,7 @@ public sealed class MainForm : Form
         setupContent.Controls.Add(actions);
         main.Controls.Add(setup, 0, 0);
 
-        var imageCard = CreateCard("CAPTURED IMAGES", out var previewContent);
+        var imageCard = CreateCard("EYE INPUT / CAPTURED IMAGES", out var previewContent);
         preview.Dock = DockStyle.Fill;
         preview.BackColor = Color.FromArgb(232, 236, 241);
         preview.SizeMode = PictureBoxSizeMode.Zoom;
@@ -245,6 +266,7 @@ public sealed class MainForm : Form
 
     private void LoadPorts()
     {
+        if (liveTask is not null) return;
         portBox.Items.Clear();
         if (repositoryRoot is null)
         {
@@ -296,7 +318,7 @@ public sealed class MainForm : Form
             return;
         }
 
-        if (repositoryRoot is null)
+        if (repositoryRoot is null || liveTask is not null)
             return;
 
         var outputDirectory = Path.Combine(repositoryRoot, "eye_dataset");
@@ -325,117 +347,167 @@ public sealed class MainForm : Form
 
     private async Task ToggleLiveAsync()
     {
-        if (liveTask is not null && !liveTask.IsCompleted)
+        if (liveTask is not null)
         {
             await StopLiveAsync();
             return;
         }
-
-        if (repositoryRoot is null || portBox.SelectedItem is null)
+        if (repositoryRoot is null || portBox.SelectedItem is null) return;
+        if (captureProcess is { HasExited: false })
         {
-            resultLabel.Text = "Select a serial port before starting live detection.";
+            resultLabel.Text = "Stop camera capture before starting live.";
             return;
         }
-
-        var outputDirectory = Path.Combine(repositoryRoot, "eye_dataset");
-        if (Directory.Exists(outputDirectory))
-            Directory.Delete(outputDirectory, recursive: true);
-        Directory.CreateDirectory(Path.Combine(outputDirectory, "left"));
-        capturedImages.Items.Clear();
-        imagePathBox.Clear();
-
-        liveCancellation = new CancellationTokenSource();
-        liveButton.Text = "Stop live detection";
-        captureButton.Enabled = false;
-        uploadButton.Enabled = false;
-        runSlotButton.Enabled = false;
-        resultLabel.Text = "Live detection running at 10 FPS.";
-
-        _ = RunProcessAsync(
-            GetPythonExecutable(),
-            ["eye_capture.py", "--out-dir", "eye_dataset", "--record"],
-            liveCancellation.Token,
-            UpdateCameraStatus);
-        liveTask = LiveUploadLoopAsync(outputDirectory, liveCancellation.Token);
-        try
+        var python = Path.Combine(repositoryRoot, ".venv-camera", "Scripts", "python.exe");
+        if (!File.Exists(python))
         {
-            try
-            {
-                await liveTask;
-            }
-            catch (OperationCanceledException)
-            {
-            }
+            resultLabel.Text = "Prepare .venv-camera using tools/requirements-live.txt first.";
+            return;
         }
+        cameraStatus = "Live: starting | Reyn | Y +0.10 | diagnostics saves eye crops";
+        fpgaStatus = "FPGA: waiting (reset btnU first, SW9 up / SW13 down)";
+        RefreshResultText();
+        liveButton.Text = "Stop live detection";
+        captureButton.Enabled = portBox.Enabled = frameBox.Enabled = cameraBox.Enabled = false;
+        uploadButton.Enabled = runSlotButton.Enabled = false;
+        liveTask = RunLiveProcessAsync(python, portBox.SelectedItem.ToString()!, (int)frameBox.Value, (int)cameraBox.Value);
+        try { await liveTask; }
         finally
         {
-            await StopLiveAsync();
+            liveTask = null;
+            liveButton.Text = "Start live 10 FPS";
+            captureButton.Enabled = portBox.Enabled = frameBox.Enabled = cameraBox.Enabled = true;
+            resumeLiveButton.Enabled = false;
+            cameraStatus = "Live stopped; reset btnU before the next session";
+            fpgaStatus = "FPGA: no current live result; board warning may persist until reset";
+            RefreshResultText();
+            UpdateActionState();
         }
     }
 
-    private async Task LiveUploadLoopAsync(string outputDirectory, CancellationToken cancellationToken)
+    private async Task RunLiveProcessAsync(string python, string port, int frameId, int camera)
     {
-        var sent = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var nextFrameId = (int)frameBox.Value;
-        while (!cancellationToken.IsCancellationRequested)
+        var info = new ProcessStartInfo(python)
         {
-            if (captureProcess is null)
-            {
-                await Task.Delay(50, cancellationToken);
-                continue;
-            }
-            if (captureProcess.HasExited)
-                return;
-
-            var files = Directory.EnumerateFiles(
-                    Path.Combine(outputDirectory, "left"), "*.png", SearchOption.TopDirectoryOnly)
-                .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-
-            foreach (var image in files)
-            {
-                if (!sent.Add(image))
-                    continue;
-
-                await WaitForStableFileAsync(image, cancellationToken);
-                await RunCliAsync(
-                    ["upload", "--image", image, "--frame-id", nextFrameId.ToString()],
-                    updateResult: true,
-                    onOutput: null);
-                nextFrameId = (nextFrameId + 1) & 0xFFFF;
-                if (frameBox.Value < frameBox.Maximum)
-                    frameBox.Value++;
-
-                if (cancellationToken.IsCancellationRequested)
-                    break;
-            }
-
-            await Task.Delay(50, cancellationToken);
+            WorkingDirectory = repositoryRoot!, UseShellExecute = false, CreateNoWindow = true,
+            RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
+        };
+        string[] arguments = ["-u", "tools/live_webcam.py", "--camera", camera.ToString(), "--port", port,
+            "--eye", "left", "--fps", "10", "--frame-id", frameId.ToString(), "--roi-style", "reyn",
+            "--crop-offset-y", "0.10", "--diagnostics", "--gui-control"];
+        foreach (var arg in arguments) info.ArgumentList.Add(arg);
+        AppendLog("$ " + python + " " + string.Join(" ", arguments));
+        using var process = new Process { StartInfo = info };
+        try
+        {
+            process.Start();
+            liveProcess = process;
+            var stdout = ReadLiveOutputAsync(process.StandardOutput, true);
+            var stderr = ReadLiveOutputAsync(process.StandardError, false);
+            await SendLiveCommandAsync("START");
+            await process.WaitForExitAsync();
+            await Task.WhenAll(stdout, stderr);
+            AppendLog($"Live client exited: {process.ExitCode}");
         }
+        catch (Exception ex) { AppendLog("Live error: " + ex.Message); }
+        finally { liveProcess = null; }
+    }
+
+    private async Task ReadLiveOutputAsync(StreamReader reader, bool events)
+    {
+        while (await reader.ReadLineAsync() is { } line)
+        {
+            if (IsDisposed) return;
+            if (events && line.StartsWith("LIVE_EVENT ", StringComparison.Ordinal))
+            {
+                try
+                {
+                    using var document = JsonDocument.Parse(line[11..]);
+                    HandleLiveEvent(document.RootElement);
+                }
+                catch (Exception ex) when (ex is JsonException or IOException or ArgumentException)
+                { AppendLog("Live event error: " + ex.Message); }
+            }
+            else if (!events || line.StartsWith("Session log:") || line.StartsWith("Eye crop:")) AppendLog(line);
+        }
+    }
+
+    private void HandleLiveEvent(JsonElement data)
+    {
+        var kind = data.GetProperty("event").GetString();
+        if (kind == "result")
+        {
+            var result = data.GetProperty("result");
+            var id = result.GetProperty("frame_id").GetInt32();
+            frameBox.Value = Math.Min(id + 1, 65535);
+            fpgaStatus = $"FPGA #{id}: {result.GetProperty("eye_class").GetString()} | {result.GetProperty("warning").GetString()} | {data.GetProperty("roundtrip_ms").GetDouble():F1} ms";
+            cameraStatus = "Live: Reyn | Y +0.10 | " + (data.GetProperty("golden_match").GetBoolean() ? "Golden MATCH" : "Golden MISMATCH");
+            var raw = File.ReadAllBytes(data.GetProperty("input_raw").GetString()!);
+            if (raw.Length != 576) throw new IOException("Expected 576 crop bytes");
+            var bitmap = new Bitmap(24, 24);
+            for (var y = 0; y < 24; y++)
+                for (var x = 0; x < 24; x++)
+                {
+                    var value = raw[y * 24 + x];
+                    bitmap.SetPixel(x, y, Color.FromArgb(value, value, value));
+                }
+            preview.Image = bitmap;
+            previewImage?.Dispose();
+            previewImage = bitmap;
+            AppendLog(fpgaStatus + " | " + cameraStatus);
+        }
+        else if (kind == "live_state")
+        {
+            var running = data.GetProperty("running").GetBoolean();
+            var stale = data.GetProperty("stale").GetBoolean();
+            var busy = data.GetProperty("busy").GetBoolean();
+            resumeLiveButton.Enabled = !running && !busy && !liveStopping;
+            cameraStatus = running ? "Live: " + (busy ? "UART busy" : "UART idle") : data.GetProperty("status").GetString()!;
+            if (stale) fpgaStatus = "FPGA: no fresh live result";
+        }
+        else if (kind == "gap_pause" || kind == "error")
+        {
+            fpgaStatus = "FPGA: no current live result";
+            cameraStatus = kind == "error" ? data.GetProperty("message").GetString()! : "Gap: wait UART idle, reset btnU, then Resume live";
+            AppendLog(cameraStatus);
+        }
+        else if (kind == "session_end") AppendLog("Session ended. Reset btnU before restarting.");
+        RefreshResultText();
+    }
+
+    private async Task SendLiveCommandAsync(string command)
+    {
+        try
+        {
+            if (liveProcess is { HasExited: false })
+            {
+                await liveProcess.StandardInput.WriteLineAsync(command);
+                await liveProcess.StandardInput.FlushAsync();
+            }
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException)
+        { AppendLog("Live command: " + ex.Message); }
     }
 
     private async Task StopLiveAsync()
     {
-        liveCancellation?.Cancel();
-        operationCancellation?.Cancel();
-        StopCaptureProcess();
-        if (liveTask is not null && !liveTask.IsCompleted)
+        if (liveTask is null) return;
+        if (liveStopping) { await liveTask; return; }
+        liveStopping = true;
+        liveButton.Enabled = resumeLiveButton.Enabled = false;
+        try
         {
-            try
+            await SendLiveCommandAsync("STOP");
+            try { await liveTask.WaitAsync(TimeSpan.FromSeconds(10)); }
+            catch (TimeoutException)
             {
-                await liveTask;
-            }
-            catch (OperationCanceledException)
-            {
+                AppendLog("Live client did not drain in 10s; terminating. Reset board before reconnecting.");
+                if (liveProcess is { HasExited: false }) liveProcess.Kill(entireProcessTree: true);
+                if (liveTask is not null) await liveTask;
             }
         }
-
-        liveTask = null;
-        liveCancellation?.Dispose();
-        liveCancellation = null;
-        liveButton.Text = "Start live 10 FPS";
-        captureButton.Enabled = true;
-        UpdateActionState();
+        finally { liveStopping = false; UpdateActionState(); }
     }
 
     private void StopCaptureProcess()
@@ -516,7 +588,7 @@ public sealed class MainForm : Form
 
     private async Task RunCliAsync(string[] arguments, bool updateResult, Action<string>? onOutput)
     {
-        if (repositoryRoot is null)
+        if (repositoryRoot is null || liveTask is not null)
             return;
 
         var isPortDiscovery = arguments.Length == 1 && arguments[0] == "ports";
@@ -637,6 +709,8 @@ public sealed class MainForm : Form
 
     private string GetPythonExecutable()
     {
+        var camera = Path.Combine(repositoryRoot ?? string.Empty, ".venv-camera", "Scripts", "python.exe");
+        if (File.Exists(camera)) return camera;
         var local = Path.Combine(repositoryRoot ?? string.Empty, ".venv", "Scripts", "python.exe");
         return File.Exists(local) ? local : "python";
     }
@@ -667,6 +741,7 @@ public sealed class MainForm : Form
 
     private void SetBusy(bool busy)
     {
+        cliBusy = busy;
         uploadButton.Enabled = !busy;
         runSlotButton.Enabled = !busy;
         portBox.Enabled = !busy;
@@ -691,12 +766,13 @@ public sealed class MainForm : Form
 
     private void UpdateActionState()
     {
-        var liveActive = liveTask is not null && !liveTask.IsCompleted;
-        uploadButton.Enabled = portBox.SelectedItem is not null &&
+        var liveActive = liveTask is not null;
+        uploadButton.Enabled = !cliBusy && portBox.SelectedItem is not null &&
             !liveActive &&
             (capturedImages.SelectedItems.Count > 0 || !string.IsNullOrWhiteSpace(imagePathBox.Text));
-        runSlotButton.Enabled = portBox.SelectedItem is not null && !liveActive;
-        liveButton.Enabled = liveActive || portBox.SelectedItem is not null;
+        runSlotButton.Enabled = !cliBusy && portBox.SelectedItem is not null && !liveActive;
+        liveButton.Enabled = !cliBusy && !liveStopping && (liveActive ||
+            (portBox.SelectedItem is not null && captureProcess is null));
     }
 
     private string? FindRepositoryRoot()

@@ -1,5 +1,14 @@
 # Integration Decisions
 
+## 2026-11-04: Live webcam host pipeline
+
+- Reuse the team's MediaPipe FaceMesh/crop function with OpenCV grayscale and INTER_AREA resizing, followed by the established 576-byte CRC upload protocol.
+- Use a Python 3.12 .venv-camera environment with a single OpenCV distribution; retain the existing UART environment.
+- Keep one fixed eye per session and one persistent serial connection. Latest-frame replacement, a 250 ms age limit and paced single transactions avoid replay and growing queues.
+- Target at most 10 inference observations per second initially. Log actual capture/send/result times; do not equate preview FPS or CNN latency with end-to-end throughput.
+- Pause on missing/late observations, label display results stale, and require operator reset before resuming. UART errors stop without retry. The current protocol cannot reset/read back FPGA history automatically, and the physical alarm can persist after the host pauses.
+- Keep images/video out of session logs by default. Provide a standalone Python preview rather than changing the existing file-oriented Windows GUI.
+
 ## 2026-11-03: External image input over UART
 
 - Add a fixed 24x24 uint8 upload path while preserving ROM SLOT/RUN and board modes.
