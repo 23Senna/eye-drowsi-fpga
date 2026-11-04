@@ -71,4 +71,6 @@ set_property -dict { PACKAGE_PIN A18 IOSTANDARD LVCMOS33 } [get_ports uart_tx]
 # Only the asynchronous path into the first synchronizer stage is exempt.
 set_false_path -from [get_ports uart_rx] -to [get_pins -hier -filter {NAME =~ */u_rx/rx_meta_reg/D}]
 # LEDs, display and UART TX are asynchronous external outputs, without a receiver clock relationship.
-set_false_path -to [get_ports {led[*] seg[*] an[*] dp uart_tx}]
+## Buzzer (MH-FMD module, I/O active low) on Pmod JA pin 1; module VCC = JA pin 6 (3.3 V), GND = JA pin 5.
+set_property -dict { PACKAGE_PIN J1 IOSTANDARD LVCMOS33 } [get_ports buzzer_n]
+set_false_path -to [get_ports {led[*] seg[*] an[*] dp uart_tx buzzer_n}]

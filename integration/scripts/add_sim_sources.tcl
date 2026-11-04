@@ -16,7 +16,7 @@ foreach f {drowsy_trace seq_expected expected_a1 expected_a2} {
     }
 }
 set tbs {}
-foreach t {tb_top_real tb_drowsy_fsm tb_input_control tb_alert_control tb_roms tb_cnn_control tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system tb_uart_upload} {
+foreach t {tb_top_real tb_drowsy_fsm tb_input_control tb_alert_control tb_buzzer_control tb_roms tb_cnn_control tb_uart_phy tb_uart_command tb_uart_format tb_uart_latency tb_uart_system tb_uart_upload} {
     lappend tbs [file join $sim $t.v]
 }
 set extra_rtl {}
