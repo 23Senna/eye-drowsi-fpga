@@ -186,6 +186,8 @@ def main(argv=None):
     parser.add_argument('--port', help='Serial port, e.g. COM4')
     parser.add_argument('--baud', type=int, default=115200)
     parser.add_argument('--timeout', type=float, default=2.0)
+    parser.add_argument('--quiet', action='store_true',
+                        help='Print only RESULT and ERR lines')
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('ports', help='List available serial ports')
     run = sub.add_parser('run', help='Select a slot, run once and print its result')
@@ -217,11 +219,14 @@ def main(argv=None):
                            parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE,
                            timeout=min(0.1, args.timeout), write_timeout=args.timeout,
                            xonxoff=False, rtscts=False, dsrdtr=False) as port:
+            emit = (lambda line: print(line, flush=True)
+                    if not args.quiet or line.startswith(('RESULT ', 'ERR '))
+                    else None)
             if args.command == 'run':
-                run_slot(port, args.slot, args.timeout)
+                run_slot(port, args.slot, args.timeout, emit=emit)
             elif args.command == 'upload':
                 pixels = load_pixels(args.image, args.slot)
-                run_image(port, pixels, args.frame_id, args.timeout)
+                run_image(port, pixels, args.frame_id, args.timeout, emit=emit)
             else:
                 reader = Lines(port)
                 while True:

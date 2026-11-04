@@ -25,6 +25,8 @@ public sealed class MainForm : Form
     private Process? captureProcess;
     private CancellationTokenSource? liveCancellation;
     private Task? liveTask;
+    private string cameraStatus = "Camera: waiting";
+    private string fpgaStatus = "FPGA: waiting";
 
     public MainForm()
     {
@@ -307,7 +309,11 @@ public sealed class MainForm : Form
         captureRefreshTimer.Start();
         try
         {
-            await RunProcessAsync(GetPythonExecutable(), ["eye_capture.py", "--out-dir", "eye_dataset"], CancellationToken.None);
+            await RunProcessAsync(
+                GetPythonExecutable(),
+                ["eye_capture.py", "--out-dir", "eye_dataset"],
+                CancellationToken.None,
+                UpdateCameraStatus);
         }
         finally
         {
@@ -348,7 +354,8 @@ public sealed class MainForm : Form
         _ = RunProcessAsync(
             GetPythonExecutable(),
             ["eye_capture.py", "--out-dir", "eye_dataset", "--record"],
-            liveCancellation.Token);
+            liveCancellation.Token,
+            UpdateCameraStatus);
         liveTask = LiveUploadLoopAsync(outputDirectory, liveCancellation.Token);
         try
         {
@@ -369,9 +376,15 @@ public sealed class MainForm : Form
     private async Task LiveUploadLoopAsync(string outputDirectory, CancellationToken cancellationToken)
     {
         var sent = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var nextFrameId = (int)frameBox.Value;
         while (!cancellationToken.IsCancellationRequested)
         {
-            if (captureProcess is null || captureProcess.HasExited)
+            if (captureProcess is null)
+            {
+                await Task.Delay(50, cancellationToken);
+                continue;
+            }
+            if (captureProcess.HasExited)
                 return;
 
             var files = Directory.EnumerateFiles(
@@ -386,9 +399,10 @@ public sealed class MainForm : Form
 
                 await WaitForStableFileAsync(image, cancellationToken);
                 await RunCliAsync(
-                    ["upload", "--image", image, "--frame-id", frameBox.Value.ToString()],
+                    ["upload", "--image", image, "--frame-id", nextFrameId.ToString()],
                     updateResult: true,
                     onOutput: null);
+                nextFrameId = (nextFrameId + 1) & 0xFFFF;
                 if (frameBox.Value < frameBox.Maximum)
                     frameBox.Value++;
 
@@ -516,11 +530,11 @@ public sealed class MainForm : Form
         operationCancellation = new CancellationTokenSource();
         var cliArguments = new List<string>();
         if (!isPortDiscovery)
-            cliArguments.AddRange(["--port", portBox.SelectedItem!.ToString()!, "--baud", "115200", "--timeout", "2"]);
+            cliArguments.AddRange(["--port", portBox.SelectedItem!.ToString()!, "--baud", "115200", "--timeout", "2", "--quiet"]);
         cliArguments.AddRange(arguments);
         var exitCode = await RunProcessAsync(GetPythonExecutable(), ["tools\\uart_cli.py", .. cliArguments], operationCancellation.Token, onOutput);
-        if (updateResult && exitCode == 0)
-            resultLabel.Text = "Classification completed. See activity for the full telemetry.";
+        if (updateResult && exitCode == 0 && liveTask is null)
+            fpgaStatus = "FPGA: classification completed";
         else if (updateResult && exitCode != 0)
             resultLabel.Text = "Operation failed. Check the activity log.";
         SetBusy(false);
@@ -580,9 +594,11 @@ public sealed class MainForm : Form
         if (string.IsNullOrWhiteSpace(line))
             return;
 
-        AppendLog(line);
         if (onOutput is null)
+        {
+            AppendLog(line);
             return;
+        }
 
         if (InvokeRequired)
         {
@@ -592,6 +608,31 @@ public sealed class MainForm : Form
         }
 
         onOutput(line);
+    }
+
+    private void UpdateCameraStatus(string line)
+    {
+        if (!line.StartsWith("CAMERA ", StringComparison.Ordinal))
+        {
+            if (line.StartsWith("ERROR", StringComparison.Ordinal) ||
+                line.StartsWith("Traceback", StringComparison.Ordinal))
+                AppendLog(line);
+            return;
+        }
+
+        var match = Regex.Match(line, @"^CAMERA left=(OPEN|CLOSED) right=(OPEN|CLOSED) state=(AWAKE|DROWSY|SLEEPING|NO FACE)$");
+        if (match.Success)
+        {
+            cameraStatus =
+                $"Camera  L:{match.Groups[1].Value}  R:{match.Groups[2].Value}  " +
+                $"State: {match.Groups[3].Value}";
+            RefreshResultText();
+        }
+    }
+
+    private void RefreshResultText()
+    {
+        resultLabel.Text = cameraStatus + Environment.NewLine + fpgaStatus;
     }
 
     private string GetPythonExecutable()
@@ -612,7 +653,16 @@ public sealed class MainForm : Form
         logBox.AppendText($"[{DateTime.Now:HH:mm:ss}] {line}{Environment.NewLine}");
         var match = Regex.Match(line, @"RESULT source=.* class=(OPEN|CLOSED) warning=(AWAKE|DROWSY|MICROSLEEP).*");
         if (match.Success)
-            resultLabel.Text = $"{match.Groups[1].Value}  ·  {match.Groups[2].Value}";
+        {
+            var warning = match.Groups[2].Value switch
+            {
+                "MICROSLEEP" => "SLEEP",
+                "DROWSY" => "TIRED",
+                var value => value
+            };
+            fpgaStatus = $"FPGA: {match.Groups[1].Value}  |  {warning}";
+            RefreshResultText();
+        }
     }
 
     private void SetBusy(bool busy)
