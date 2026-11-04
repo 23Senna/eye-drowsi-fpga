@@ -8,7 +8,7 @@
 //  2. latency view (SW[15]): display = hex latency
 //  3. sequence mode (SW[14]): 2 laps of seq.mem; eye + drowsy state vs drowsy_ref (seq_expected.mem),
 //     display text on every frame (OPEn / CLSd / tirE / SLEP)
-// The stub latency is shortened to LAT here to keep the run short (STUB_LATENCY default 37290 = cnn_top).
+// The stub latency is shortened to LAT here to keep the run short (STUB_LATENCY default 7996 = cnn_top).
 module tb_top;
     localparam RB = 6, LAT = 3000, STEP = 5000, NSEQ = 128;
     reg clk = 0, btnC = 0, btnU = 0;

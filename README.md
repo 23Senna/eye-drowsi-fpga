@@ -38,9 +38,9 @@ and hardware details.
 | int8 model accuracy | train 97.2% · valid 94.4% · **test 98.1%** (108 images) | Recomputed from `ml/export/*.mem` and `ml/*.npz` with the bit-exact NumPy model |
 | RTL vs. golden model | **16/16 logit pairs identical** (`rtl/cnn_top.v`) | Icarus Verilog via `./run_sim.sh` |
 | Unit tests | All pass with 0 errors | `./run_sim.sh` |
-| Latency | 37,290 cycles/image = 373 µs at 100 MHz | Pipelined layers (`conv1_layer`, `conv2_layer`, `fc_layer` with `mac_pipe`); measured by simulation |
-| Resources | 601 LUT, 700 FF, 6.5 BRAM, 3 DSP | Vivado 2025.2.1, full board top `integration/` `drowsiness_top` incl. `cnn_top` (2 Nov, without UART) |
-| **Timing at 100 MHz** | **Met: WNS +2.385 ns, WHS +0.091 ns** | Same build; 100 MHz board clock used directly, no MMCM |
+| Latency | 7,996 cycles/image = 80 µs at 100 MHz | Filter-parallel layers (4 / 8 / 2 `mac_pipe` in `conv1_layer` / `conv2_layer` / `fc_layer`); measured by simulation |
+| Resources | 2,351 LUT, 2,181 FF, 7.5 BRAM, 14 DSP | Vivado 2025.2.1, full board top `integration/` `drowsiness_top` incl. `cnn_top` + UART/upload (4 Nov, `build_uart.tcl`) |
+| **Timing at 100 MHz** | **Met: WNS +1.201 ns, WHS +0.034 ns** | Same build; 100 MHz board clock used directly, no MMCM; board test PASS (4 Nov) |
 
 > **Evaluation caveat:** The test set is small and all samples come from one
 > subject. Treat the 98.1% test accuracy as optimistic; see the issues document
@@ -275,15 +275,15 @@ Vivado project.
 
 ## Team
 
-The roles below are taken from the 29 October 2026 daily report.
+Roles summarised from the daily progress reports (29 Oct – 3 Nov 2026).
 
 | Member | Role |
 |---|---|
-| Michael Reynaldi Tamara ("Reyn") | Python model, dataset, and weight generation |
-| Handy Jonarta | Architecture design |
-| Bramantio Ananda ("Tio") | Architecture design and topic |
-| Karunia Muda Kurniawan ("Karan") | Dataset and GitHub environment |
-| Nabil Karim Abdurrahman | Role not listed in the report |
+| Michael Reynaldi Tamara ("Reyn") | ML model: dataset, training, int8/fixed-point export; live camera input (OpenCV) |
+| Handy Jonarta | CNN core architecture (parallel layers, 100 MHz) and block diagrams |
+| Nabil Karim Abdurrahman | CNN core layers + layer testbenches; slides and GitHub |
+| Karunia Muda Kurniawan ("Karan") | UART: result output and image upload |
+| Bramantio Ananda ("Tio") | Top-level integration (input control, drowsy FSM, alert/display), FPGA implementation (XDC, Vivado, board test), top-level testbenches |
 
 ## License and attribution
 

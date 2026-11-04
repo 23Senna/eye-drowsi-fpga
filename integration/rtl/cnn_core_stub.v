@@ -5,7 +5,7 @@
 // cycles after the start cycle. logit0/1 = Python golden logits (stub_logits.mem), eye_state = logit0 >= logit1
 // (FC class 0 = closed, argmax tie -> class 0).
 module cnn_core_stub #(
-    parameter LATENCY    = 37290,         // = cnn_top latency, must be > 578
+    parameter LATENCY    = 7996,          // = cnn_top latency (parallel core, 4 Nov), must be > 578
     parameter LOGIT_FILE = "stub_logits.mem"
 ) (
     input  wire        clk,

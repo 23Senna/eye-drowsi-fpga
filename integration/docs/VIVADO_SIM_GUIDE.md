@@ -5,6 +5,9 @@ e.g. `integration/vivado/drowsiness.xpr` from `scripts/create_project.tcl` (Viva
 once before (it makes `sim/vectors/`). The 6 testbenches are then in **Simulation Sources → sim_1**; top = `tb_top_real`.
 All 6 PASS (30 Oct).
 
+> Note (4 Nov): since the filter-parallel core one inference is 7,996 cycles = 80 µs; absolute times in the tables
+> below were measured with the old 37,290-cycle core, so later events now happen earlier (parallel core (4 Nov)).
+
 ## 1. Open and run
 
 1. Open Vivado from the Start menu → **Open Project** → your `.xpr`.
@@ -13,10 +16,10 @@ All 6 PASS (30 Oct).
    `tb_top_real` simulates **70.37 ms**, which takes a few minutes of real time.
 3. When it stops, look at the **Tcl Console** (bottom). Expected lines:
    ```
-   manual: 16 slots checked, 0 errors; cnn_top latency 37290 cycles (372 us)
+   manual: 16 slots checked, 0 errors; cnn_top latency 7996 cycles (79 us)
    sequence: 64 frames checked (13 in MICROSLEEP), 0 errors total
    scan: 16 frames checked, 0 errors total
-   PASS tb_top_real (cnn_top: 16 slots bit-exact, latency 37290 cycles)
+   PASS tb_top_real (cnn_top: 16 slots bit-exact, latency 7996 cycles)
    $finish called at time : 70368550 ns
    ```
    The testbench checks everything itself: if the last line says **PASS**, the design is correct.
@@ -56,15 +59,15 @@ LEDs `[3:0]` slot, `[4]` busy, `[5]` eye closed, `[6]` sequence mode, `[13:7]` P
 | Time | Part | What to look at |
 |---|---|---|
 | 0 – 0.1 µs | reset | `btnU` = 1 for 10 cycles |
-| 0.7 µs → 5.99 ms | **1. manual mode** | `sw[3:0]` = 0..15, one `btnC` press each; `cnn_start` → 372.9 µs later `cnn_done` / `frame_done` |
-| 5.993 – 5.994 ms | **2. latency view** | `sw[15]` = 1, display shows `0372` (µs); `latency` = 37290 |
+| 0.7 µs → 5.99 ms | **1. manual mode** | `sw[3:0]` = 0..15, one `btnC` press each; `cnn_start` → 80.0 µs later `cnn_done` / `frame_done` |
+| 5.993 – 5.994 ms | **2. latency view** | `sw[15]` = 1, display shows `0079` (µs); `latency` = 7996 |
 | 5.994 → 57.57 ms | **3. sequence mode** | `sw[14]` = 1, one frame every 0.8 ms (64 frames, slots from `seq.mem`) |
 | 57.57 → 70.37 ms | **4. scan mode** | `sw[10]` = 1 too, slots 0..15 in order, results = manual mode |
 | 70.37 ms | end | `$finish`, PASS line |
 
 ### Part 1: one frame per slot (`frame_done` at 0.374 ms + n × 0.3745 ms)
 
-`latency` is always **37290 cycles** (= 372.9 µs at 100 MHz, in simulation and on the board; the display shows `0372`).
+`latency` is always **7996 cycles** (= 80.0 µs at 100 MHz, in simulation and on the board; the display shows `0079`).
 `eye_state` = 1 when logit0 ≥ logit1. Values = Python golden (fixed-point export, S2 = 6); slots 0 and 1 are the
 model's two misclassified test images (closed image → open, open image → closed):
 
@@ -102,7 +105,7 @@ First frame at 7.17 ms, then every 0.8 ms. Watch `closed_count` (closed frames i
 | 57.57 | end of sequence (state stays DROWSY through part 4) | |
 
 ### Part 4: scan
-`img_slot` 0, 1, …, 15 at 57.99, 58.79, … 69.99 ms (`cnn_start`; `frame_done` 0.373 ms later, the last at 70.37 ms);
+`img_slot` 0, 1, …, 15 at 57.99, 58.79, … 69.99 ms (`cnn_start`; `frame_done` 0.080 ms later, the last at 70.37 ms);
 `eye_state` 0, 1, 1, 0, 1, 0 … exactly as in part 1.
 
 ## 4. The other testbenches

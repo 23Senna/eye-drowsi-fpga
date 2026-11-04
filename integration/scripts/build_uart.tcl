@@ -16,10 +16,10 @@ foreach m {cnn_top rom_weights conv1_layer conv2_layer fc_layer mac_pipe relu_re
 }
 add_files -norecurse $source_list
 foreach m {conv1_w conv1_b conv2_w conv2_b fc_w fc_b images} {
-    add_files -norecurse [file join $root ml export $m.mem]
+    add_files -norecurse [list [file join $root ml export $m.mem]]
 }
-add_files -norecurse [file join $root integration mem seq.mem]
-add_files -fileset constrs_1 -norecurse [file join $root integration constraints basys3.xdc]
+add_files -norecurse [list [file join $root integration mem seq.mem]]
+add_files -fileset constrs_1 -norecurse [list [file join $root integration constraints basys3.xdc]]
 set_property top drowsiness_top [current_fileset]
 update_compile_order -fileset sources_1
 synth_design -top drowsiness_top -part xc7a35tcpg236-1

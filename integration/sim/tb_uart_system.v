@@ -6,7 +6,7 @@ module tb_uart_system;
 `ifdef USE_STUB
     localparam LAT=40;
 `else
-    localparam LAT=37290;
+    localparam LAT=7996;
 `endif
     reg clk=0,btnC=0,btnU=0,rx=1;
     reg [15:0] sw=0;

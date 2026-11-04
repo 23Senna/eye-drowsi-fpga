@@ -104,7 +104,8 @@ Requant = floor shift + clip [0,127] per layer (S1 = 10, S2 = 6; fixed-point exp
 
 The team delivered `rtl/cnn_top.v` + `rtl/rom_weights.v` (own ROMs incl. images). Since 2 Nov the core is
 pipelined (`conv1_layer` / `conv2_layer` / `fc_layer` + `mac_pipe`, synchronous buffer reads) and the export is fixed point
-(S1 = 10, S2 = 6).
+(S1 = 10, S2 = 6). Since 4 Nov the layers are filter-parallel (4 / 8 / 2 `mac_pipe`, one tap per clock for all
+filters; `rom_weights` returns wide words: conv1 32 bit, conv2 64 bit, fc 16 bit).
 `drowsiness_top` instantiates it directly (stub only with `USE_STUB`); their files are used from their repo, not copied.
 
 | cnn_top port | Use in drowsiness_top |
@@ -117,7 +118,8 @@ pipelined (`conv1_layer` / `conv2_layer` / `fc_layer` + `mac_pipe`, synchronous 
 | `logit0/1 [31:0]` | low-confidence check (32-bit in drowsy_fsm) |
 
 Verified: `sim/tb_top_real.v` — all 16 slots bit-exact vs the golden logits, 64 sequence frames vs `drowsy_ref`.
-Latency 37,290 cycles = 372.9 µs (SW15 shows `0372`). The 100 MHz board clock is used directly (`CLK_MHZ = 100`,
-no MMCM): WNS +2.385 ns, WHS +0.091 ns, 601 LUT / 700 FF / 6.5 BRAM / 3 DSP (2 Nov build, without UART).
+Latency 7,996 cycles = 80.0 µs (SW15 shows `0079`). The 100 MHz board clock is used directly (`CLK_MHZ = 100`,
+no MMCM). 4 Nov build with UART + upload (`integration/scripts/build_uart.tcl`): WNS +1.201 ns, WHS +0.034 ns,
+2,351 LUT / 2,181 FF / 7.5 BRAM / 14 DSP (2 Nov serial-pipelined core without UART: WNS +2.385 ns, 601 LUT / 3 DSP).
 History: the first sequential one-MAC core needed 75,826 cycles and failed 100 MHz (WNS −6.58 ns), so it ran at 50 MHz
 through an MMCM; `CLK_MHZ = 50` still selects that path. `rtl/cnn_control.v` (BRAM-friendly, 1 MAC/cycle, 36,124 cycles) stays available as a reference.

@@ -49,7 +49,7 @@ basys3_wrapper ── btnR → rising-edge → start
 * Each layer has its own pipelined multiply-accumulate lanes (`mac_pipe`):
   conv1 computes 4 filters in parallel, conv2 computes 8 filters in parallel,
   and FC computes both classes in parallel. The layers still run one after the
-  other (37,290 cycles per image, 373 µs at 100 MHz); parallel lanes reduce
+  other (7,996 cycles per image, 80 µs at 100 MHz); parallel lanes reduce
   the number of taps per output rather than changing the layer sequencing.
 * `rom_weights.v` reads the exported `.mem` files through synchronous ROM
   ports and packs all filter/class lanes for the current tap into one word

@@ -136,7 +136,7 @@ def main(argv=None):
                 fault(check,args.test,pixels,args.frame_id,operator_reset)
                 check.emit('RECOVERY: upload a complete valid image with a fresh ID')
                 result=run_image(port,pixels,args.frame_id+1,timeout=3,emit=check.emit)
-                if (result['logit0'],result['logit1'],result['cycles'],result['us'])!=(-17106,17976,37290,372) or result['eye_class']!='OPEN':
+                if (result['logit0'],result['logit1'],result['cycles'],result['us'])!=(-17106,17976,7996,79) or result['eye_class']!='OPEN':
                     raise RuntimeError('Recovery does not match golden image')
                 check.emit(f'PASS {args.test}: rejection and valid-upload recovery match')
                 summary.update(status='PASS',recovery=result)
