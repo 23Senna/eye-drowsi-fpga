@@ -173,6 +173,7 @@ def main():
     parser = argparse.ArgumentParser(description="Record eye/eyebrow crops; EAR indicators are computed on the laptop.")
     parser.add_argument('--out-dir', default=OUT_DIR)
     parser.add_argument('--camera', type=int, default=CAM_INDEX)
+    parser.add_argument('--record', action='store_true', help='Start recording immediately')
     args = parser.parse_args()
     out_dir = args.out_dir
     os.makedirs(os.path.join(out_dir, "left"), exist_ok=True)
@@ -192,7 +193,7 @@ def main():
     interval = 1.0 / FPS_SAVE
     last_save = 0.0
     frame_id = 0
-    recording = False
+    recording = args.record
     closed_since = None      # time when both eyes became closed
 
     print("SPACE = start/stop saving | + / - = EAR threshold | Q = quit")
@@ -269,6 +270,9 @@ def main():
                     frame[0:ph, 0:pw] = cv2.cvtColor(preview, cv2.COLOR_GRAY2BGR)
             else:
                 closed_since = None
+
+            if l_ear is not None:
+                print(f"CAMERA left={'CLOSED' if l_closed else 'OPEN'} right={'CLOSED' if r_closed else 'OPEN'} state={status}", flush=True)
 
             draw_panel(frame, l_ear, r_ear, l_closed, r_closed,
                        status, closed_time, thresh)
