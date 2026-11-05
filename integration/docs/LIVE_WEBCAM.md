@@ -109,6 +109,11 @@ capture-to-result 37 ms (p90 50). Closures gave CLOSED runs -> MICROSLEEP and
 recovered via DROWSY -> AWAKE. Before (115200, 16 ms timer, dry-run model):
 transaction 115 ms, capture-to-result 137 ms, 8.4 inferences/s.
 
+Board run 5 Nov, 150 MHz bitstream `build/day6_150mhz_20261105` (712 cycles, us=4): 30 s `--norm train`
+297 results, 9.9 inferences/s, camera read 18.5 ms, crop 8.6 ms, slot wait 26 ms, UART transaction
+12.0 ms (p90 14.0), capture-to-result 38 ms (p90 51); closures -> MICROSLEEP -> DROWSY -> AWAKE.
+20 s `--diagnostics` run: 35/35 golden matches.
+
 ```powershell
 .\.venv-camera\Scripts\python.exe tools\live_webcam.py --camera 0 --eye left --fps 10 --dry-run
 ```
