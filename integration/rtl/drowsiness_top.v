@@ -8,14 +8,14 @@
 module drowsiness_top #(
     parameter UART_ENABLE  = 1,
     parameter UART_BAUD    = 115200,
-    parameter CLK_MHZ      = 100,         // 100 or 50
+    parameter CLK_MHZ      = 150,         // 100 or 50
     parameter UPLOAD_TIMEOUT = CLK_MHZ*1000000,
     parameter UPLOAD_DRAIN = CLK_MHZ*100000,
     parameter DEB_CYCLES   = CLK_MHZ * 10000,     // 10 ms debounce
     parameter STEP_TICKS   = CLK_MHZ * 100000,    // 100 ms per sequence frame
     parameter SLOW_TICKS   = CLK_MHZ * 1000000,   // 1 s per frame with SW12 (demo)
-    parameter REFRESH_BITS = (CLK_MHZ == 100) ? 18 : 17,   // ~650 us per digit
-    parameter BLINK_BITS   = (CLK_MHZ == 100) ? 24 : 23,   // ~6 Hz blink
+    parameter REFRESH_BITS = (CLK_MHZ == 100) ? 18 : (CLK_MHZ == 150) ? 18 : 17,
+    parameter BLINK_BITS   = (CLK_MHZ == 100) ? 24 : (CLK_MHZ == 150) ? 24 : 23,
     parameter STUB_LATENCY = 7996,        // = cnn_top latency (stub build only)
     parameter IMG_FILE     = "images.mem",
     parameter W_FILE       = "weights.mem",
@@ -44,8 +44,8 @@ module drowsiness_top #(
     end else begin : g_mmcm
         wire fb_unbuf, fb_buf, clk_unbuf;
         // VCO = 100 MHz * 10 = 1000 MHz, CLKOUT0 = 1000 / (1000 / CLK_MHZ)
-        MMCME2_BASE #(.CLKIN1_PERIOD(10.0), .DIVCLK_DIVIDE(1), .CLKFBOUT_MULT_F(10.0),
-                      .CLKOUT0_DIVIDE_F(1000.0 / CLK_MHZ)) u_mmcm (
+        MMCME2_BASE #(.CLKIN1_PERIOD(10.0), .DIVCLK_DIVIDE(1), .CLKFBOUT_MULT_F((CLK_MHZ == 150) ? 9.0 : 10.0),
+                      .CLKOUT0_DIVIDE_F((CLK_MHZ == 150) ? 6.0 : 1000.0 / CLK_MHZ)) u_mmcm (
             .CLKIN1(clk), .CLKFBIN(fb_buf), .CLKFBOUT(fb_unbuf), .CLKFBOUTB(), .CLKOUT0(clk_unbuf),
             .CLKOUT0B(), .CLKOUT1(), .CLKOUT1B(), .CLKOUT2(), .CLKOUT2B(), .CLKOUT3(), .CLKOUT3B(),
             .CLKOUT4(), .CLKOUT5(), .CLKOUT6(), .LOCKED(locked), .PWRDWN(1'b0), .RST(1'b0));
@@ -117,7 +117,7 @@ module drowsiness_top #(
     localparam UPLOAD_SUPPORTED=1;
     wire prediction;                       // cnn_top: 1 = open, 0 = closed (tie -> closed)
 
-    cnn_top #(.EXTERNAL_INPUT(1)) u_core (
+    cnn_top_150 #(.EXTERNAL_INPUT(1)) u_core (
         .external_image(pc_mode && external_image),.external_addr(image_read_addr),.external_data(image_read_data),
         .clk(sys_clk), .rst(rst), .start(cnn_start), .img_base_addr({img_slot, 10'b0}),
         .done(cnn_done), .prediction(prediction), .logit0(logit0), .logit1(logit1));
