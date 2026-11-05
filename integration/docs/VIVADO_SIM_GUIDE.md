@@ -5,7 +5,7 @@ e.g. `integration/vivado/drowsiness.xpr` from `scripts/create_project.tcl` (Viva
 once before (it makes `sim/vectors/`). The 6 testbenches are then in **Simulation Sources → sim_1**; top = `tb_top_real`.
 All 6 PASS (30 Oct).
 
-> Note (4 Nov): since the filter-parallel core one inference is 7,996 cycles = 80 µs; absolute times in the tables
+> Note (5 Nov): the 3bf6c36 core takes 702 cycles = 7 µs (4 Nov: 7,996 cycles = 80 µs); absolute times in the tables
 > below were measured with the old 37,290-cycle core, so later events now happen earlier (parallel core (4 Nov)).
 
 ## 1. Open and run

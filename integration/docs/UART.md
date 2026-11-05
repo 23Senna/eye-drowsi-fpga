@@ -4,7 +4,7 @@ The board accepts selection/run commands and streams CNN results over the onboar
 
 ## Connection and controls
 
-Use the Basys3 **PROG/UART** micro-USB connector, a data-capable cable and the board's USB-UART driver. UART is **115200 baud, 8 data bits, no parity, one stop bit**, without hardware/software flow control. FPGA `uart_rx` is B18 and `uart_tx` is A18, both LVCMOS33; directions are from the FPGA perspective. No external RS-232-level connection is required. Pin references: Digilent Basys3 Master XDC and reference manual.
+Use the Basys3 **PROG/UART** micro-USB connector, a data-capable cable and the board's USB-UART driver. UART is **1,000,000 baud (since 5 Nov; was 115200), 8 data bits, no parity, one stop bit**, without hardware/software flow control. FPGA `uart_rx` is B18 and `uart_tx` is A18, both LVCMOS33; directions are from the FPGA perspective. No external RS-232-level connection is required. Pin references: Digilent Basys3 Master XDC and reference manual.
 
 | Control | Board ownership (SW9 down) | PC ownership (SW9 up) |
 |---|---|---|
@@ -28,7 +28,7 @@ PC:   SLOT 3
 FPGA: OK SLOT 3
 PC:   RUN
 FPGA: OK RUN
-FPGA: RESULT source=PC slot=3 class=OPEN warning=AWAKE logit0=-17106 logit1=17976 cycles=7996 us=79
+FPGA: RESULT source=PC slot=3 class=OPEN warning=AWAKE logit0=-17106 logit1=17976 cycles=702 us=7
 ```
 
 Wait for the SLOT acknowledgement before RUN. After `OK RUN`, wait for RESULT before the next command. There is no RUN queue. SLOT and RUN are rejected until the previous inference/result transmission completes. An accepted RUN latches the PC slot through the system controller; later switches or requests cannot change that frame.

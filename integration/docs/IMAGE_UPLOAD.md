@@ -7,7 +7,8 @@ upload is rejected in USE_STUB builds, which do not execute pixel arithmetic.
 ## PC demonstration
 
 Program a bitstream built from this revision, reset with btnU, and set SW9 up.
-Use the board's PROG/UART USB connection at 115200 8N1. Close other programs
+Use the board's PROG/UART USB connection at 1,000,000 baud 8N1 (default since 5 Nov;
+host tools default to `uart_cli.DEFAULT_BAUD`; a terminal must be set to 1000000). Close other programs
 holding the COM port. Replace COM6 with the actual port.
 
 ```powershell
@@ -54,7 +55,7 @@ PC:   <576 binary pixels><CRC high byte><CRC low byte>
 FPGA: OK FRAME 4660
 PC:   RUN_FRAME 1234
 FPGA: OK RUN
-FPGA: RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=... logit1=... cycles=7996 us=79 frame_id=4660
+FPGA: RESULT source=UPLOAD slot=0 class=OPEN warning=AWAKE logit0=... logit1=... cycles=702 us=7 frame_id=4660
 ```
 
 Wait for each complete acknowledgement. CRC is CRC-16/CCITT-FALSE over the
@@ -97,9 +98,31 @@ after validation. The first implementation uses one staging buffer, with
 no overlapping upload/inference. ROM mode remains the default for standalone
 cnn_top instances. Weights/biases stay in ROM.
 
-Payload transfer is 50 ms at 115200 8N1. Existing inference is about 0.080 ms;
-ASCII output adds roughly 10 ms. These are wire-time estimates, not measured
-end-to-end throughput. A host-paced 10 Hz demo is a reasonable starting point.
+Link latency (5 Nov). `UART_BAUD` defaults to 1,000,000 (divider exactly 100 at
+100 MHz; `tb_uart_phy` runs at that divider including the baud-tolerance cases).
+`build_uart.tcl <out> 115200` still builds a legacy-baud bitstream. Modelled
+per-frame transaction (`python tools/fake_fpga.py --baud B --usb-ms U`,
+cumulative ms to READY / OK FRAME / OK RUN / RESULT):
+
+| Baud | FTDI latency timer | READY | OK FRAME | OK RUN | RESULT |
+|---|---|---|---|---|---|
+| 115200 | 16 ms (Windows default) | 18 | 86 | 105 | 114 |
+| 115200 | 1 ms | 3 | 56 | 59 | 69 |
+| 1000000 | 16 ms | 17 | 40 | 57 | 58 |
+| 1000000 | 1 ms | 2 | 9 | 11 | 12 |
+| **board 5 Nov** 1000000 | 1 ms | | | | **11.5** (p90 12.8) |
+
+Board run 5 Nov (COM4, day6 bitstream, 297 live frames): measured transaction 11.5 ms
+median, matching the model; golden slot-3 upload `cycles=702 us=7` logits -17106/17976.
+
+The FTDI driver holds short replies until its latency timer expires, so every
+acknowledgement wait costs up to 16 ms by default. Set it to 1 ms once per PC:
+Device Manager -> Ports -> USB Serial Port (COMx, the Basys3 one) -> Properties ->
+Port Settings -> Advanced -> Latency Timer = 1. The protocol (CRC, IDs, errors,
+three acknowledgement waits) is unchanged; merging LOAD/RUN would save only
+about 2-3 ms more at these settings. Inference is 0.08 ms of the total.
+Measure the real numbers with `tools/live_webcam.py`, which prints a per-stage
+latency summary on exit and stores it as `latency.txt` in the session folder.
 `cycles/us` measure CNN/controller latency, excluding upload and serial output.
 `slot=0` is a compatibility field for uploads, not a ROM source identifier;
 use source=UPLOAD and frame_id to identify the observation.

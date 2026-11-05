@@ -7,7 +7,7 @@
 // (no SYNTHESIS macro) the board clock is used directly - testbenches set CLK_MHZ = 100.
 module drowsiness_top #(
     parameter UART_ENABLE  = 1,
-    parameter UART_BAUD    = 115200,
+    parameter UART_BAUD    = 1000000,     // 100 MHz / 1 Mbaud = exact divider 100; host uart_cli.DEFAULT_BAUD
     parameter CLK_MHZ      = 100,         // 100 or 50
     parameter UPLOAD_TIMEOUT = CLK_MHZ*1000000,
     parameter UPLOAD_DRAIN = CLK_MHZ*100000,

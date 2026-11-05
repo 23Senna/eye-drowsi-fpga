@@ -39,7 +39,7 @@ main camera window to quit. This mode never opens a COM port.
 ## Live FPGA mode
 
 Program an image-upload-capable bitstream. Current parallel firmware reports
-7996 cycles / 79 us; older image-upload firmware reports 37290 / 372. The
+702 cycles / 7 us (5 Nov core, 1 Mbaud); 4 Nov parallel firmware 7996 / 79 and older image-upload firmware 37290 / 372 run at 115200 (`--baud 115200`). The
 live client accepts either numerical timing rather than hardcoding latency.
 Close the Windows GUI or serial terminal using the same COM port.
 
@@ -64,6 +64,59 @@ or after quitting, until btnU/reset or new valid observations clear it.
 A UART error stops transmission without automatic retries. Stop the app,
 reset the board with no sender running, and restart. IDs increase and the
 worker stops at exhaustion. Choose a fresh initial ID if not resetting first.
+
+## Latency and dry run (5 Nov)
+
+The bitstream and host tools now use 1,000,000 baud (`--baud` overrides; it must
+match the bitstream). Set the FTDI latency timer to 1 ms (see IMAGE_UPLOAD.md).
+On exit the client prints median/p90 per stage and saves `latency.txt`:
+`capture` (cap.read), `crop` (MediaPipe + crop), `mailbox_wait_ms` (crop waiting
+for the paced UART slot), `uart_ready/frame/run/result` (cumulative inside one
+transaction), `roundtrip_ms` and `capture_to_result_ms`, plus inferences/s.
+Timestamps use `time.perf_counter`: on Windows `time.monotonic` only ticks every
+15.6 ms, which quantised the earlier roundtrip logs. The driver frame queue is
+limited to one frame (`CAP_PROP_BUFFERSIZE=1`) so captures are not stale.
+
+`--dry-run` needs no board: `tools/fake_fpga.py` answers the same protocol with
+the bit-exact integer CNN and DrowsyRef and models wire time (`--baud`) and the
+FTDI timer (`--usb-ms`, default 1). Its UART numbers are a model; camera and
+MediaPipe numbers are real.
+
+Dry run 5 Nov (laptop webcam, `--fps 10`, medians): camera read 24 ms, MediaPipe +
+crop 6 ms, wait for the paced UART slot 21 ms. 115200 / 16 ms: transaction 115 ms,
+capture-to-result 137 ms (p90 168), 8.4 inferences/s. 1 Mbaud / 1 ms: transaction
+12 ms, capture-to-result 32 ms (p90 42), 9.9 inferences/s.
+
+Crop domain: the 85 reyn crops of that run (eyes open) average 124 grey levels
+(per-image std 18.7) against 79.7 / 15.7 for ml/train.npz. The integer model
+called all 85 CLOSED; shifted to the training mean/std (`tools/check_crops.py`
+`match_train`) 64/85 were OPEN.
+
+Fix (5 Nov): `--norm train` is now the default. After the reyn crop, each 24x24
+crop is shifted/scaled to the training mean 79.7 / std 15.7 (`check_crops.match_train`)
+and those exact bytes are shown, uploaded and audited; `--norm none` restores the
+old behaviour. The Windows GUI picks this up automatically through the default.
+30 s dry run (open, ~5 s closed, open): 290 results, all golden matches; closures
+gave runs of 23-24 CLOSED -> MICROSLEEP, then DROWSY -> AWAKE; a few 1-6 frame
+CLOSED runs remain while open (partly blinks). Retraining on webcam crops would
+still help; this is the no-retrain fix for the demo.
+
+Board run 5 Nov (COM4, 1 Mbaud bitstream `build/day6_1mbaud_20261105`, FTDI timer
+1 ms, `--norm train --diagnostics`, 30 s open / closed / open): 297 results,
+297/297 golden matches, cycles=702; 9.9 inferences/s; medians camera read 22 ms,
+MediaPipe + crop 6.5 ms, slot wait 26 ms, UART transaction 11.5 ms (p90 12.8),
+capture-to-result 37 ms (p90 50). Closures gave CLOSED runs -> MICROSLEEP and
+recovered via DROWSY -> AWAKE. Before (115200, 16 ms timer, dry-run model):
+transaction 115 ms, capture-to-result 137 ms, 8.4 inferences/s.
+
+```powershell
+.\.venv-camera\Scripts\python.exe tools\live_webcam.py --camera 0 --eye left --fps 10 --dry-run
+```
+
+Keep `--fps 10`: the board FSM counts observations (8 closed in a row =
+MICROSLEEP = 0.8 s, DROWSY at >= 13 of the last 32 = 3.2 s window). The faster
+link lowers the age of each result, not the rate; a higher rate would need new
+FSM constants.
 
 ## Scheduling and evidence
 
