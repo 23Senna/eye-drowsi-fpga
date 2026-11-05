@@ -101,6 +101,14 @@ gave runs of 23-24 CLOSED -> MICROSLEEP, then DROWSY -> AWAKE; a few 1-6 frame
 CLOSED runs remain while open (partly blinks). Retraining on webcam crops would
 still help; this is the no-retrain fix for the demo.
 
+Board run 5 Nov (COM4, 1 Mbaud bitstream `build/day6_1mbaud_20261105`, FTDI timer
+1 ms, `--norm train --diagnostics`, 30 s open / closed / open): 297 results,
+297/297 golden matches, cycles=702; 9.9 inferences/s; medians camera read 22 ms,
+MediaPipe + crop 6.5 ms, slot wait 26 ms, UART transaction 11.5 ms (p90 12.8),
+capture-to-result 37 ms (p90 50). Closures gave CLOSED runs -> MICROSLEEP and
+recovered via DROWSY -> AWAKE. Before (115200, 16 ms timer, dry-run model):
+transaction 115 ms, capture-to-result 137 ms, 8.4 inferences/s.
+
 ```powershell
 .\.venv-camera\Scripts\python.exe tools\live_webcam.py --camera 0 --eye left --fps 10 --dry-run
 ```

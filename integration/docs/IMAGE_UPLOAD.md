@@ -110,6 +110,10 @@ cumulative ms to READY / OK FRAME / OK RUN / RESULT):
 | 115200 | 1 ms | 3 | 56 | 59 | 69 |
 | 1000000 | 16 ms | 17 | 40 | 57 | 58 |
 | 1000000 | 1 ms | 2 | 9 | 11 | 12 |
+| **board 5 Nov** 1000000 | 1 ms | | | | **11.5** (p90 12.8) |
+
+Board run 5 Nov (COM4, day6 bitstream, 297 live frames): measured transaction 11.5 ms
+median, matching the model; golden slot-3 upload `cycles=702 us=7` logits -17106/17976.
 
 The FTDI driver holds short replies until its latency timer expires, so every
 acknowledgement wait costs up to 16 ms by default. Set it to 1 ms once per PC:
