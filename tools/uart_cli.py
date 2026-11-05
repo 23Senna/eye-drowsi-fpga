@@ -1,10 +1,13 @@
-"""Control and monitor the Basys3 CNN over a line-oriented 115200 8N1 UART."""
+"""Control and monitor the Basys3 CNN over a line-oriented 8N1 UART (DEFAULT_BAUD, 1 Mbaud)."""
 import argparse
 import binascii
 from pathlib import Path
 import re
 import sys
 import time
+
+# Must match drowsiness_top UART_BAUD of the programmed bitstream (100 MHz / 100 = exact divider).
+DEFAULT_BAUD = 1000000
 
 RESULT = re.compile(
     r"RESULT source=(BOARD|PC|SEQ|UPLOAD) slot=(\d+) class=(OPEN|CLOSED) "
@@ -109,8 +112,12 @@ def write_all(port, data):
         offset += written
 
 
-def run_image(port, pixels, frame_id, timeout=2.0, emit=print):
-    """Upload once, validate ACKs, run once; never retry after uncertain delivery."""
+def run_image(port, pixels, frame_id, timeout=2.0, emit=print, stages=None):
+    """Upload once, validate ACKs, run once; never retry after uncertain delivery.
+
+    stages (optional dict) receives host monotonic ms per step: ready, frame, run, result."""
+    t0 = time.perf_counter()  # time.monotonic() ticks at 15.6 ms on Windows
+    mark = (lambda name: stages.__setitem__(name, (time.perf_counter() - t0) * 1000)) if stages is not None else (lambda name: None)
     pixels = bytes(pixels)
     if len(pixels) != 576 or not 0 <= frame_id <= 65535:
         raise ValueError('Expected 576 pixels and a uint16 frame_id')
@@ -134,11 +141,14 @@ def run_image(port, pixels, frame_id, timeout=2.0, emit=print):
 
     write_all(port, f'LOAD {frame_id:04X}\n'.encode('ascii'))
     response(f'READY {frame_id}')
+    mark('ready')
     crc = binascii.crc_hqx(pixels, 0xffff)
     write_all(port, pixels + crc.to_bytes(2, 'big'))
     response(f'OK FRAME {frame_id}')
+    mark('frame')
     write_all(port, f'RUN_FRAME {frame_id:04X}\n'.encode('ascii'))
     response('OK RUN')
+    mark('run')
     deadline = time.monotonic() + timeout
     while True:
         line = reader.read(deadline)
@@ -151,6 +161,7 @@ def run_image(port, pixels, frame_id, timeout=2.0, emit=print):
         if result['source'] == 'UPLOAD':
             if result['frame_id'] != frame_id:
                 raise ValueError('Mismatched upload frame_id')
+            mark('result')
             return result
 
 
@@ -184,7 +195,7 @@ def load_pixels(path, slot=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', help='Serial port, e.g. COM4')
-    parser.add_argument('--baud', type=int, default=115200)
+    parser.add_argument('--baud', type=int, default=DEFAULT_BAUD)
     parser.add_argument('--timeout', type=float, default=2.0)
     parser.add_argument('--quiet', action='store_true',
                         help='Print only RESULT and ERR lines')

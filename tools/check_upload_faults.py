@@ -7,7 +7,7 @@ from pathlib import Path
 import threading
 import time
 
-from uart_cli import Lines, load_pixels, run_image, write_all
+from uart_cli import DEFAULT_BAUD, Lines, load_pixels, run_image, write_all
 
 
 class Check:
@@ -111,6 +111,7 @@ def operator_reset(check):
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port',required=True)
+    parser.add_argument('--baud',type=int,default=DEFAULT_BAUD)
     parser.add_argument('--test',choices=['crc','timeout','reset'],required=True)
     parser.add_argument('--frame-id',type=int,required=True,help='Decimal 0..65534; recovery uses ID+1')
     args=parser.parse_args(argv)
@@ -128,7 +129,7 @@ def main(argv=None):
     try:
         import serial
         with (output/'serial.log').open('w',encoding='utf-8') as log:
-            with serial.Serial(args.port,115200,timeout=0.05,write_timeout=3,
+            with serial.Serial(args.port,args.baud,timeout=0.05,write_timeout=3,
                                xonxoff=False,rtscts=False,dsrdtr=False) as port:
                 check=Check(port,log)
                 check.emit(f'TEST {args.test}; SW9 up, SW13 down; frame_id={args.frame_id}')
@@ -136,7 +137,7 @@ def main(argv=None):
                 fault(check,args.test,pixels,args.frame_id,operator_reset)
                 check.emit('RECOVERY: upload a complete valid image with a fresh ID')
                 result=run_image(port,pixels,args.frame_id+1,timeout=3,emit=check.emit)
-                if (result['logit0'],result['logit1'],result['cycles'],result['us'])!=(-17106,17976,7996,79) or result['eye_class']!='OPEN':
+                if (result['logit0'],result['logit1'],result['cycles'],result['us'])!=(-17106,17976,712,4) or result['eye_class']!='OPEN':
                     raise RuntimeError('Recovery does not match golden image')
                 check.emit(f'PASS {args.test}: rejection and valid-upload recovery match')
                 summary.update(status='PASS',recovery=result)

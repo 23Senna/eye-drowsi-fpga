@@ -8,14 +8,20 @@ from collections import deque
 import sys
 import time
 import threading
-from live_transport import Transport
+from live_transport import Transport, clock
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--port', help='FPGA COM port; required unless --preview-only')
+    parser.add_argument('--port', help='FPGA COM port; required unless --preview-only or --dry-run')
+    parser.add_argument('--baud',type=int,default=None,help='UART baud; must match the bitstream (default uart_cli.DEFAULT_BAUD = 1000000)')
+    parser.add_argument('--norm',choices=['train','none'],default='train',
+        help='train (default): shift/scale each 24x24 crop to the training-set mean 79.7 / std 15.7 before upload '
+             '(webcam crops average ~124 and were all classified CLOSED); none: send the crop unchanged')
+    parser.add_argument('--dry-run',action='store_true',help='No board: tools/fake_fpga.py (integer CNN + DrowsyRef, modelled wire/USB time)')
+    parser.add_argument('--usb-ms',type=float,default=1.0,help='--dry-run only: modelled FTDI latency timer per reply (Windows default 16)')
     parser.add_argument('--camera',type=int,default=0)
     parser.add_argument('--backend',choices=['auto','dshow','msmf'],default='dshow')
     parser.add_argument('--eye',choices=['left','right'],default='left',help="Person's own eye, before any mirroring")
@@ -37,8 +43,10 @@ def main(argv=None):
         parser.error('fps must be >0..10, frame-id 0..65535, max-gap >=0.3')
     if not 0<=args.pad<=2:parser.error('pad must be 0..2')
     if not -0.5<=args.crop_offset_y<=0.5:parser.error('crop-offset-y must be -0.5..0.5')
-    if not args.port and not args.preview_only and not args.check:
-        parser.error('--port is required unless --preview-only or --check')
+    if not args.port and not args.preview_only and not args.check and not args.dry_run:
+        parser.error('--port is required unless --preview-only, --dry-run or --check')
+    from uart_cli import DEFAULT_BAUD
+    args.baud=args.baud or DEFAULT_BAUD
     try:
         import cv2
         import mediapipe as mp
@@ -47,6 +55,7 @@ def main(argv=None):
             raise RuntimeError('MediaPipe legacy FaceMesh missing; install requirements-live.txt with Python 3.12')
         sys.path.insert(0,str(ROOT))
         from eye_capture import crop_eye, LEFT_EYE, RIGHT_EYE, BLACK_LEVEL, WHITE_LEVEL
+        from check_crops import match_train, TRAIN_MEAN, TRAIN_STD
         if args.check:
             print(f'Python {sys.version.split()[0]}, OpenCV {cv2.__version__}, MediaPipe {mp.__version__}, pySerial {serial.VERSION}')
             return 0
@@ -58,6 +67,7 @@ def main(argv=None):
     crop_description=(f'reyn eye+brow | pad {args.pad:.2f} | contrast {BLACK_LEVEL}..{WHITE_LEVEL}'
                       if args.roi_style=='reyn' else f'{args.roi_style} | {1 + args.pad:.2f}x eye width')
     crop_description+=f' | Y {args.crop_offset_y:+.2f}'
+    if args.norm=='train':crop_description+=f' | norm mean {TRAIN_MEAN} std {TRAIN_STD}'
     print(f'Eye crop: {crop_description} | output 24x24 grayscale',flush=True)
     events=queue.SimpleQueue()
     worker=None
@@ -66,12 +76,15 @@ def main(argv=None):
     log=None
     status='PREVIEW ONLY' if args.preview_only else 'Reset btnU, SW9 UP, SW13 DOWN; SPACE to start'
     running=False
-    last_crop=last_result=time.monotonic()
+    last_crop=last_result=clock()
     last_face_notice=None
     result=None
     last_result_capture=0
     roundtrip_ms=observed_hz=None
     send_times=deque(maxlen=11)
+    stage={k:deque(maxlen=300) for k in ('capture','crop','mailbox_wait_ms','uart_ready','uart_frame','uart_run',
+        'uart_result','roundtrip_ms','capture_to_result_ms')}
+    all_sends=[]
     label=None
     golden_status=''
     sequence=0
@@ -94,9 +107,10 @@ def main(argv=None):
     try:
         log=(session/'events.jsonl').open('w',encoding='utf-8')
         record({'event':'session','camera':args.camera,'backend':args.backend,'eye':args.eye,
-                'target_fps':args.fps,'port':args.port,'preview_only':args.preview_only,
+                'target_fps':args.fps,'port':args.port,'baud':args.baud,'dry_run':args.dry_run,'preview_only':args.preview_only,
                 'diagnostics':args.diagnostics,'pad':args.pad,'roi_style':args.roi_style,
                 'crop_offset_y':args.crop_offset_y,
+                'norm':args.norm,'norm_target':[TRAIN_MEAN,TRAIN_STD] if args.norm=='train' else None,
                 'contrast_levels':[BLACK_LEVEL,WHITE_LEVEL] if args.roi_style=='reyn' else None,
                 'preprocessing':'MediaPipe landmarks + OpenCV grayscale/INTER_AREA 24x24',
                 'note':'Diagnostics saves uploaded eye crops only; board history is observation-count based'})
@@ -104,6 +118,7 @@ def main(argv=None):
         cap=cv2.VideoCapture(args.camera,api)
         if not cap.isOpened():
             raise RuntimeError('Cannot open webcam; try --camera 1 or --backend msmf')
+        cap.set(cv2.CAP_PROP_BUFFERSIZE,1)  # do not queue stale frames in the driver (adds capture latency)
         mesh=mp.solutions.face_mesh.FaceMesh(max_num_faces=1,refine_landmarks=True,
             min_detection_confidence=0.5,min_tracking_confidence=0.5)
         if not args.preview_only:
@@ -111,8 +126,13 @@ def main(argv=None):
             if args.diagnostics:
                 from live_audit import Audit
                 audit=Audit(session/'inputs')
-            worker=Transport(lambda:serial.Serial(args.port,115200,timeout=0.05,write_timeout=2,
-                xonxoff=False,rtscts=False,dsrdtr=False),events.put,args.fps,args.frame_id,audit=audit)
+            if args.dry_run:
+                from fake_fpga import FakeFpga
+                factory=lambda:FakeFpga(args.baud,args.usb_ms)
+            else:
+                factory=lambda:serial.Serial(args.port,args.baud,timeout=0.05,write_timeout=2,
+                    xonxoff=False,rtscts=False,dsrdtr=False)
+            worker=Transport(factory,events.put,args.fps,args.frame_id,audit=audit)
             worker.thread.start()
         window='Live eye -> Basys 3 | SPACE start/pause | Q quit'
         cv2.namedWindow(window,cv2.WINDOW_NORMAL)
@@ -123,8 +143,10 @@ def main(argv=None):
                 if command=='STOP':stop_requested=True
                 elif command=='START' and not running:pending_start=True
             if stop_requested:break
+            read_start=clock()
             ok,frame=cap.read()
-            captured=time.monotonic()
+            captured=clock()
+            stage['capture'].append((captured-read_start)*1000)
             if not ok:
                 raise RuntimeError('Webcam disconnected or frame capture failed')
             sequence+=1
@@ -134,11 +156,14 @@ def main(argv=None):
             if face.multi_face_landmarks:
                 crop,box=crop_eye(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY),
                     face.multi_face_landmarks[0].landmark,LEFT_EYE if args.eye=='left' else RIGHT_EYE,w,h,pad=args.pad,style=args.roi_style,offset_y=args.crop_offset_y)
+                if crop is not None and args.norm=='train':
+                    crop=match_train(crop)  # the exact bytes uploaded, shown and audited
                 if crop is not None:
+                    stage['crop'].append((clock()-captured)*1000)
                     last_crop=captured
                     cv2.rectangle(frame,box[:2],box[2:],(0,255,0),2)
                     cv2.imshow('Latest eye crop (not necessarily last inferred frame)',cv2.resize(crop,(192,192),interpolation=cv2.INTER_NEAREST))
-            now=time.monotonic()
+            now=clock()
             found=crop is not None
             if not found and worker is not None:
                 worker.mailbox.clear()
@@ -152,7 +177,9 @@ def main(argv=None):
                     result=event['result'];last_result=event['result_monotonic']
                     last_result_capture=event['captured_monotonic']
                     roundtrip_ms=event['roundtrip_ms']
-                    send_times.append(event['sent_monotonic'])
+                    for key in ('roundtrip_ms','capture_to_result_ms','mailbox_wait_ms'):stage[key].append(event[key])
+                    for key,value in event['stages_ms'].items():stage['uart_'+key].append(value)
+                    send_times.append(event['sent_monotonic']);all_sends.append(event['sent_monotonic'])
                     observed_hz=(len(send_times)-1)/(send_times[-1]-send_times[0]) if len(send_times)>1 and send_times[-1]>send_times[0] else None
                     if 'golden_match' in event:
                         golden_status='Golden '+('MATCH' if event['golden_match'] else 'MISMATCH')
@@ -188,7 +215,7 @@ def main(argv=None):
             if args.diagnostics:
                 cv2.putText(frame,f'{golden_status} | label: {label or "UNLABELED"} | O=open C=closed U=clear',
                             (12,110),cv2.FONT_HERSHEY_SIMPLEX,0.45,(0,255,255),1)
-            cv2.putText(frame,f'Crop: {args.roi_style} | pad {args.pad:.2f} | Y {args.crop_offset_y:+.2f} -> 24x24',
+            cv2.putText(frame,f'Crop: {args.roi_style} | pad {args.pad:.2f} | Y {args.crop_offset_y:+.2f} | norm {args.norm} -> 24x24',
                         (12,h-42),cv2.FONT_HERSHEY_SIMPLEX,0.45,(0,255,255),1)
             cv2.putText(frame,'LIVE' if running else status,(12,h-18),cv2.FONT_HERSHEY_SIMPLEX,0.45,(0,255,255),1)
             cv2.imshow(window,frame)
@@ -197,7 +224,7 @@ def main(argv=None):
                 key=ord(' ');pending_start=False
             if args.diagnostics and key in (ord('o'),ord('c'),ord('u')):
                 label={ord('o'):'OPEN',ord('c'):'CLOSED',ord('u'):None}[key]
-                record({'event':'operator_label','label':label,'monotonic':time.monotonic()})
+                record({'event':'operator_label','label':label,'monotonic':clock()})
             if key==ord('q') or cv2.getWindowProperty(window,cv2.WND_PROP_VISIBLE)<1:
                 break
             if key==ord(' ') and worker is not None and not worker.error:
@@ -225,8 +252,26 @@ def main(argv=None):
         if log is not None:
             record({'event':'session_end','exit_code':exit_code,'note':'Stop/pause does not clear FPGA alarm; press btnU'})
             log.close()
+        summary=latency_summary(stage,all_sends,args)
+        if summary:
+            print(summary)
+            (session/'latency.txt').write_text(summary+'\n',encoding='utf-8')
         print('Session log:',session)
     return exit_code
+
+
+def latency_summary(stage,sends,args):
+    """Median / p90 per stage in ms (camera read, MediaPipe+crop, UART steps cumulative) and fps."""
+    import statistics
+    rows=[]
+    for key,values in stage.items():
+        if values:
+            v=sorted(values)
+            rows.append(f'  {key:22s} median {statistics.median(v):7.1f}  p90 {v[int(0.9*(len(v)-1))]:7.1f}  n={len(v)}')
+    if not rows:return ''
+    fps=(len(sends)-1)/(sends[-1]-sends[0]) if len(sends)>1 and sends[-1]>sends[0] else 0
+    link='dry-run model usb %.1f ms'%args.usb_ms if args.dry_run else str(args.port)
+    return '\n'.join([f'Latency summary ({link}, {args.baud} baud, target {args.fps} fps, measured {fps:.2f} inferences/s):']+rows)
 
 
 if __name__=='__main__':

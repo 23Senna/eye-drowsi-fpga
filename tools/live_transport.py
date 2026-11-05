@@ -3,6 +3,9 @@ import threading
 import time
 from uart_cli import run_image
 
+# Timestamp clock shared with live_webcam: monotonic() has 15.6 ms resolution on Windows.
+clock = time.perf_counter
+
 
 class Mailbox:
     def __init__(self):
@@ -58,7 +61,7 @@ class Transport:
                     if not self.enabled.is_set():
                         self.stop.wait(0.01)
                         continue
-                    now = time.monotonic()
+                    now = clock()
                     if now < next_send:
                         self.stop.wait(min(next_send-now,0.01))
                         continue
@@ -73,17 +76,19 @@ class Transport:
                         continue
                     if self.frame_id > 65535:
                         raise RuntimeError('Frame IDs exhausted; reset board and start a new session')
-                    started = time.monotonic()
+                    started = clock()
                     self.busy.set()
+                    stages = {}
                     result = run_image(port,pixels,self.frame_id,timeout=2,
-                                       emit=lambda line:self.emit({'event':'serial','line':line}))
-                    finished = time.monotonic()
+                                       emit=lambda line:self.emit({'event':'serial','line':line}),stages=stages)
+                    finished = clock()
                     self.busy.clear()
                     audit={} if self.audit is None else self.audit(self.frame_id,pixels,result)
                     self.emit({'event':'result','result':result,'capture_sequence':sequence,
                                'operator_label':label,**audit,
                                'captured_monotonic':captured,'sent_monotonic':started,
-                               'result_monotonic':finished,'roundtrip_ms':(finished-started)*1000,
+                               'result_monotonic':finished,'roundtrip_ms':(finished-started)*1000,'stages_ms':stages,
+                               'mailbox_wait_ms':(started-captured)*1000,
                                'capture_to_result_ms':(finished-captured)*1000,
                                'capture_interval_ms':None if previous_capture is None else (captured-previous_capture)*1000,
                                'replaced_frames':self.mailbox.replaced})

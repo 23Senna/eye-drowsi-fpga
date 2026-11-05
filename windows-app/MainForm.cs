@@ -602,7 +602,7 @@ public sealed class MainForm : Form
         operationCancellation = new CancellationTokenSource();
         var cliArguments = new List<string>();
         if (!isPortDiscovery)
-            cliArguments.AddRange(["--port", portBox.SelectedItem!.ToString()!, "--baud", "115200", "--timeout", "2", "--quiet"]);
+            cliArguments.AddRange(["--port", portBox.SelectedItem!.ToString()!, "--timeout", "2", "--quiet"]);
         cliArguments.AddRange(arguments);
         var exitCode = await RunProcessAsync(GetPythonExecutable(), ["tools\\uart_cli.py", .. cliArguments], operationCancellation.Token, onOutput);
         if (updateResult && exitCode == 0 && liveTask is null)

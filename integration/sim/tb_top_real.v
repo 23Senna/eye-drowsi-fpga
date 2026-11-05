@@ -23,7 +23,8 @@ module tb_top_real;
     localparam [27:0] T_OPEN = {7'h3F, 7'h73, 7'h79, 7'h54}, T_CLSD = {7'h39, 7'h38, 7'h6D, 7'h5E},
                       T_TIRE = {7'h78, 7'h04, 7'h50, 7'h79}, T_SLEP = {7'h6D, 7'h38, 7'h79, 7'h73};
 
-    drowsiness_top #(.UART_ENABLE(0), .CLK_MHZ(100), .DEB_CYCLES(4), .STEP_TICKS(STEP), .REFRESH_BITS(RB), .BLINK_BITS(8),
+    localparam MHZ = 150;   // board build: 150 MHz + cnn_top_150 (5 Nov)
+    drowsiness_top #(.UART_ENABLE(0), .CLK_MHZ(MHZ), .DEB_CYCLES(4), .STEP_TICKS(STEP), .REFRESH_BITS(RB), .BLINK_BITS(8),
         .SEQ_FILE(`MEM("seq.mem")))
     dut (.uart_rx(1'b1), .clk(clk), .sw(sw), .btnC(btnC), .btnU(btnU), .led(led), .seg(seg), .dp(dp), .an(an));
 
@@ -70,7 +71,7 @@ module tb_top_real;
             if (led[5] !== pred || led[3:0] !== s)            fail("manual LEDs", s);
             grab; if (shown !== (pred ? T_CLSD : T_OPEN))     fail("manual text", s);
         end
-        lat = dut.latency; us = lat / 100;
+        lat = dut.latency; us = lat / MHZ;
         $display("manual: %0d slots checked, %0d errors; cnn_top latency %0d cycles (%0d us)", `CNN_N_IMG, errors, lat, us);
 
         // ---- 2. latency view: microseconds, 4 decimal digits ----

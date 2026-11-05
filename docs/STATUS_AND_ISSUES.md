@@ -9,10 +9,10 @@ The [previous status snapshot](archive/STATUS_20261103.md) remains historical.
 
 - Basys 3 integer CNN: 24x24 grayscale, Conv 1->4, Conv 4->8, FC 128->2;
   int8 weights, signed int32 logits, S1=10/S2=6. Filter-parallel lanes 4/8/2.
-  Inference: **7,996 cycles = 79.96 us at 100 MHz**.
+  Inference: **712 cycles = 4.75 us at 150 MHz** (5 Nov `cnn150` core; 100 MHz core 702 cycles = 7.02 us).
 - ROM slots, board sequence controls, observation-count drowsiness FSM,
   LED/display and JA1 buzzer.
-- 115200 8N1 UART telemetry and CRC-checked 576-byte external image uploads.
+- 1 Mbaud 8N1 UART (115200 before 5 Nov) telemetry and CRC-checked 576-byte external image uploads.
 - Host webcam preprocessing and persistent UART, integrated into Windows GUI.
   Live defaults: left eye, Reyn eye+brow, pad 0.15, contrast 60..235,
   vertical offset +0.10, target 10 Hz. MediaPipe/crop run on the laptop;

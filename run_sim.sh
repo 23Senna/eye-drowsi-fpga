@@ -16,6 +16,8 @@ iverilog -g2005 -o "$B/tb_cnn.vvp" \
   "$ROOT/rtl/conv2_layer.v" \
   "$ROOT/rtl/fc_layer.v" \
   "$ROOT/rtl/mac_pipe.v" \
+  "$ROOT/rtl/mac_pipe_lut.v" \
+  "$ROOT/rtl/mac_sel.v" \
   "$ROOT/rtl/relu_requant.v" \
   "$ROOT/rtl/maxpool2x2.v" \
   "$ROOT/sim/tb_cnn.v"

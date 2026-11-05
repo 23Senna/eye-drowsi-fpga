@@ -11,7 +11,7 @@ Use integration/rtl/drowsiness_top.v, part xc7a35tcpg236-1. Default CLK_MHZ=100
 uses the board oscillator directly; CLK_MHZ=50 is a legacy MMCM option.
 btnU passes through input_control; active CNN rst is asynchronous active-high.
 Normal source build is scripts/build_uart.tcl from the repository root path
-`integration/scripts/build_uart.tcl`. UART is 115200 8N1; SW9 selects ownership.
+`integration/scripts/build_uart.tcl`. Clock: `CLK_MHZ=150` (default, MMCM 100 MHz x 9 / 6, core `rtl/cnn150/`; WNS +0.158 ns) or 100 (`build_uart.tcl <out> <baud> 100`). UART is 1,000,000 baud 8N1 since 5 Nov (`UART_BAUD`; `build_uart.tcl <out> 115200` for a legacy build); SW9 selects ownership.
 
 ## CNN and arithmetic
 
@@ -47,7 +47,7 @@ plus CRC-16/CCITT-FALSE. Invalid/partial uploads cannot run. Only one
 transaction is outstanding; the live host keeps a latest-frame mailbox.
 Telemetry contains source, slot, raw class, warning, signed logits, cycles,
 integer us and uploaded frame_id. Integer us truncates cycles/CLK_MHZ:
-7,996 cycles at 100 MHz = 79.96 us, transmitted as us=79.
+712 cycles at 150 MHz = 4.75 us, transmitted as us=4 (5 Nov `cnn150` core, `CLK_MHZ=150`); `CLK_MHZ=100` = 702 cycles / us=7.
 
 ## Board and temporal rules
 

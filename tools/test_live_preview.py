@@ -49,7 +49,9 @@ class PreviewTests(unittest.TestCase):
              patch('live_webcam.Transport',return_value=worker):
             self.assertEqual(main(['--port','FAKE','--log-dir',directory]),0)
             pixels,_,_,label=worker.mailbox.item
-            self.assertEqual(pixels,expected.tobytes())
+            # Default --norm train: the reyn crop shifted to the training mean/std is what gets uploaded.
+            from check_crops import match_train
+            self.assertEqual(pixels,match_train(expected).tobytes())
             self.assertEqual(len(pixels),576)
             self.assertIsNone(label)
             events=[json.loads(line) for line in next(Path(directory).rglob('events.jsonl')).read_text().splitlines()]
@@ -98,6 +100,7 @@ class PreviewTests(unittest.TestCase):
         class Camera:
             released=False
             def isOpened(self):return True
+            def set(self,prop,value):return True
             def read(self):return True,np.full((480,640,3),100,dtype=np.uint8)
             def release(self):self.released=True
         class Mesh:

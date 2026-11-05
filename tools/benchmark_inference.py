@@ -69,8 +69,8 @@ def main():
     parser.add_argument('--samples', type=int, default=5000, help='Timed batch-one inferences per repeat')
     parser.add_argument('--repeats', type=int, default=5)
     parser.add_argument('--warmup', type=int, default=300)
-    parser.add_argument('--fpga-cycles', type=int, default=7996)
-    parser.add_argument('--clock-hz', type=float, default=100_000_000)
+    parser.add_argument('--fpga-cycles', type=int, default=712)
+    parser.add_argument('--clock-hz', type=float, default=150_000_000)
     args = parser.parse_args()
     if min(args.samples, args.repeats, args.warmup, args.fpga_cycles) < 1 or not args.clock_hz > 0:
         parser.error('All parameters must be positive')

@@ -64,7 +64,7 @@ module drowsy_fsm #(
     reg [31:0]  tick_cnt;
     reg         pending, seq_mode_d;
     reg [19:0]  lat_cnt;
-    reg [6:0]   us_pre;                 // lat_cnt mod CLK_MHZ
+    reg [7:0]   us_pre;                 // lat_cnt mod CLK_MHZ (8 bits: CLK_MHZ up to 256)
     reg [15:0]  us_bcd;                 // floor(lat_cnt / CLK_MHZ), BCD = microseconds
     reg         eye_l, low_l, eye_prev;
     reg [W-1:0] window;
@@ -124,7 +124,7 @@ module drowsy_fsm #(
                               state   <= S_UPDATE;
                           end else if (lat_cnt != 20'hFFFFF) begin
                               lat_cnt <= lat_cnt + 20'd1;
-                              us_pre  <= (us_pre == CLK_MHZ - 1) ? 7'd0 : us_pre + 7'd1;
+                              us_pre  <= (us_pre == CLK_MHZ - 1) ? 8'd0 : us_pre + 8'd1;
                               if (us_pre == CLK_MHZ - 1) us_bcd <= bcd_inc(us_bcd);
                           end
                 S_UPDATE: begin eye_state <= eye_l; state <= S_SHOW; end

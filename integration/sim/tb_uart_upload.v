@@ -1,7 +1,8 @@
 `timescale 1ns/1ps
 `include "tb_paths.vh"
 module tb_uart_upload;
-    localparam CPB=16, N=37;
+    localparam CPB=16, N=37, MHZ=150;   // 150 MHz build: baud = MHZ*1e6/CPB
+    localparam LAT=712;   // real cnn_top_150 latency in cycles (Handy 14704ca, 5 Nov; 100 MHz core 702)
     reg clk=0, btnU=1, btnC=0, rx=1;
     reg [15:0] sw=0;
     wire tx;
@@ -9,7 +10,7 @@ module tb_uart_upload;
     wire [6:0] seg;
     wire dp;
     wire [3:0] an;
-    drowsiness_top #(.UART_BAUD(6250000),.DEB_CYCLES(4),
+    drowsiness_top #(.CLK_MHZ(MHZ),.UART_BAUD(MHZ*1000000/CPB),.DEB_CYCLES(4),
         .UPLOAD_TIMEOUT(10000),.UPLOAD_DRAIN(1000),.REFRESH_BITS(6),.SEQ_FILE(`MEM("seq.mem"))) dut (
         .clk(clk),.sw(sw),.btnU(btnU),.btnC(btnC),.uart_rx(rx),.uart_tx(tx),
         .led(led),.seg(seg),.dp(dp),.an(an));
@@ -70,6 +71,16 @@ module tb_uart_upload;
             nextline=nextline+1;
         end
     endtask
+    task expect_pair(input [1599:0] a, input [1599:0] b);   // next two lines are a and b, either order
+        begin
+            wait(nlines>nextline+1);
+            if(!((lines[nextline]===a && lines[nextline+1]===b) || (lines[nextline]===b && lines[nextline+1]===a))) begin
+                $display("actual: %0s | %0s\nexpected: %0s | %0s (either order)",lines[nextline],lines[nextline+1],a,b);
+                $fatal(1,"upload response mismatch");
+            end
+            nextline=nextline+2;
+        end
+    endtask
     task quiet;
         begin
             @(negedge clk);
@@ -122,12 +133,15 @@ module tb_uart_upload;
                 command("RUN_FRAME 1111\n");expect_line("ERR ID");quiet;
             end
             command($sformatf("RUN_FRAME %04h\n",frameid));expect_line("OK RUN");
-            if(i==0)begin command("LOAD 9999\n");expect_line("ERR BUSY");end
+            if(i==0)command("LOAD 9999\n");   // during inference/RESULT output -> ERR BUSY
             l0=logits[i][63:32];l1=logits[i][31:0];
             class_text=(l1>l0)?"OPEN":"CLOSED";
             case(warnings[i])0:warning_text="AWAKE";1:warning_text="DROWSY";2:warning_text="MICROSLEEP";default:$fatal(1,"bad warning");endcase
-            $sformat(expected,"RESULT source=UPLOAD slot=0 class=%0s warning=%0s logit0=%0d logit1=%0d cycles=7996 us=79 frame_id=%0d",class_text,warning_text,l0,l1,16'h1200+i);
-            expect_line(expected);quiet;
+            $sformat(expected,"RESULT source=UPLOAD slot=0 class=%0s warning=%0s logit0=%0d logit1=%0d cycles=%0d us=%0d frame_id=%0d",class_text,warning_text,l0,l1,LAT,LAT/MHZ,16'h1200+i);
+            // A short CNN can finish before LOAD's LF arrives: ERR BUSY then queues behind RESULT.
+            if(i==0)expect_pair(expected,"ERR BUSY");
+            else expect_line(expected);
+            quiet;
             $display("upload frame %0d: golden logits and temporal state match",i);
             command($sformatf("RUN_FRAME %04h\n",frameid));expect_line("ERR NOFRAME");quiet;
         end

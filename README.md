@@ -25,7 +25,7 @@ ReLU(>>6, sat 127) -> MaxPool2 -> FC 128->2 -> argmax`.
 
 | Measurement | Result | Configuration / evidence |
 |---|---|---|
-| CNN latency | 7,996 cycles = **79.96 us at 100 MHz** | Filter-parallel 4/8/2 lanes; UART integer us field truncates to 79 |
+| CNN latency | 712 cycles = **4.75 us at 150 MHz** (`rtl/cnn150`, Handy 14704ca, 5 Nov; 100 MHz core: 702 cycles = 7.02 us) | UART integer us field truncates to 4 |
 | FPGA resources | 2,376 LUT, 2,230 FF, 7.5 BRAM, 14 DSP | drowsiness_top + real CNN + UART/upload + buzzer; 9dac154, Vivado 2025.2, build uart_hw_20261104_131740 |
 | Routed timing | Setup +0.948 ns, hold +0.067 ns | [Raw reports and input hashes](docs/reports/current_build_20261104/README.md); all 29 recorded build-input hashes match reviewed main e3ac7ea |
 | RTL/golden | 16/16 exported logit pairs identical; 14/16 labels correct | Recorded regressions; slots 0/1 are known model misses |

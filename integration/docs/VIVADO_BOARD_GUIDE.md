@@ -86,7 +86,7 @@ LD14 = DROWSY, LD15 = MICROSLEEP (blinks).
 | 2 | SW[3:0] = 0000, press btnC | `OPEn` (slot 0 is a **closed** eye the model gets wrong) |
 | 3 | SW[3:0] = 0001, press btnC | `CLSd` (slot 1 is an **open** eye the model gets wrong), LD5 on |
 | 4 | slots 2–15 (SW = 0010 … 1111), btnC each | even slot → `CLSd`, odd slot → `OPEn` (all correct) |
-| 5 | SW15 up | `0079` = latency in µs (7,996 cycles at 100 MHz); SW15 down again |
+| 5 | SW15 up | `0004` = latency in µs (712 cycles at 150 MHz, 5 Nov; 100 MHz build `0007`); SW15 down again |
 | 6 | SW14 up (sequence mode, dot on the right digit) | frames every 100 ms from `seq.mem`: ~3.5 s `OPEn`/`CLSd` with the PERCLOS bar growing → `tirE` (LD14) → `SLEP` with LD15 blinking → back to `tirE`, then the 6.4 s script repeats |
 | 6b | SW14 up **+ SW12 up** (slow, best for watching / filming) | same script at **1 frame per second**: ~35 s `OPEn`/`CLSd` (blinks at frames 6 and 13), PERCLOS bar grows → `tirE` at ~36 s → `SLEP` + LD15 blinking at ~47 s → `tirE` at ~60 s → repeats every 64 s |
 | 6c | SW14 up **+ SW11 up** (step) | nothing moves until you press **btnC**: one frame per press, LD0–3 show the slot of that frame → `tirE` after press 36, `SLEP` after press 47. Best for explaining frame by frame |

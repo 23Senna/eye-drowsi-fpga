@@ -2,16 +2,16 @@
 `include "tb_paths.vh"
 // End-to-end commands and results through physical serial pins, real or stub CNN.
 module tb_uart_system;
-    localparam CPB=64;
+    localparam CPB=64, MHZ=150;   // 150 MHz build: baud = MHZ*1e6/CPB
 `ifdef USE_STUB
     localparam LAT=40;
 `else
-    localparam LAT=7996;
+    localparam LAT=712;   // real cnn_top_150 latency (Handy 14704ca, 5 Nov; 100 MHz core 702)
 `endif
     reg clk=0,btnC=0,btnU=0,rx=1;
     reg [15:0] sw=0;
     wire tx;wire [15:0] led;wire [6:0] seg;wire dp;wire [3:0] an;
-    drowsiness_top #(.UART_BAUD(1562500),.DEB_CYCLES(4),.STUB_LATENCY(LAT),
+    drowsiness_top #(.CLK_MHZ(MHZ),.UART_BAUD(MHZ*1000000/CPB),.DEB_CYCLES(4),.STUB_LATENCY(LAT),
         .STEP_TICKS(500),.SLOW_TICKS(1000),.REFRESH_BITS(6),.BLINK_BITS(8),
         .IMG_FILE(`MEM("images.mem")),.W_FILE(`MEM("weights.mem")),.B_FILE(`MEM("biases.mem")),
         .SEQ_FILE(`MEM("seq.mem")),.LOGIT_FILE(`MEM("stub_logits.mem"))) dut(
@@ -53,7 +53,7 @@ module tb_uart_system;
                 class_text=eye?"CLOSED":"OPEN";
                 warning_text=(status==2)?"MICROSLEEP":(status==1)?"DROWSY":"AWAKE";
                 $sformat(expected_frame,"RESULT source=%0s slot=%0d class=%0s warning=%0s logit0=%0d logit1=%0d cycles=%0d us=%0d",
-                    source_text,dut.img_slot,class_text,warning_text,g0,g1,LAT,LAT/100);
+                    source_text,dut.img_slot,class_text,warning_text,g0,g1,LAT,LAT/MHZ);
                 expected_lines[n_expected]=expected_frame;n_expected=n_expected+1;
             end
             if(decoded_error)$fatal(1,"invalid TX stop bit");

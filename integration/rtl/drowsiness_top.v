@@ -2,20 +2,22 @@
 // CNN core = the CNN team's cnn_top (eye-drowsi-fpga/rtl/cnn_top.v + rom_weights.v, own image/weight ROMs,
 // image chosen by img_base_addr = slot * 1024, prediction 1 = open). Define USE_STUB to build with
 // cnn_core_stub (golden logits, fixed latency) plus the integration ROMs instead.
-// Clock: CLK_MHZ = 100 (default) uses the 100 MHz board clock directly (pipelined cnn_top meets 100 MHz);
-// CLK_MHZ = 50 puts an MMCM in front (for the old one-MAC cnn_top, conv2 path ~16.6 ns). In simulation
-// (no SYNTHESIS macro) the board clock is used directly - testbenches set CLK_MHZ = 100.
+// Clock: CLK_MHZ = 150 (default, 5 Nov) = MMCM 100 MHz x 9 / 6 + Handy's retimed core rtl/cnn150/cnn_top_150.v;
+// CLK_MHZ = 100 uses the board clock directly with rtl/cnn_top.v; CLK_MHZ = 50 = MMCM for the old one-MAC core.
+// CNN_150 selects the core (default: CLK_MHZ == 150). In simulation (no SYNTHESIS macro) the board clock is used
+// directly; only the cycle-count parameters (UART divider, debounce, us conversion) follow CLK_MHZ.
 module drowsiness_top #(
     parameter UART_ENABLE  = 1,
     parameter UART_BAUD    = 115200,
-    parameter CLK_MHZ      = 150,         // 100 or 50
+    parameter CLK_MHZ      = 150,         // 150 (MMCM, cnn_top_150), 100 (direct, cnn_top) or 50
+    parameter CNN_150      = (CLK_MHZ == 150),   // 1 = rtl/cnn150/cnn_top_150, 0 = rtl/cnn_top
     parameter UPLOAD_TIMEOUT = CLK_MHZ*1000000,
     parameter UPLOAD_DRAIN = CLK_MHZ*100000,
     parameter DEB_CYCLES   = CLK_MHZ * 10000,     // 10 ms debounce
     parameter STEP_TICKS   = CLK_MHZ * 100000,    // 100 ms per sequence frame
     parameter SLOW_TICKS   = CLK_MHZ * 1000000,   // 1 s per frame with SW12 (demo)
-    parameter REFRESH_BITS = (CLK_MHZ == 100) ? 18 : (CLK_MHZ == 150) ? 18 : 17,
-    parameter BLINK_BITS   = (CLK_MHZ == 100) ? 24 : (CLK_MHZ == 150) ? 24 : 23,
+    parameter REFRESH_BITS = (CLK_MHZ >= 100) ? 18 : 17,   // ~650 us per digit at 100 MHz, ~440 us at 150
+    parameter BLINK_BITS   = (CLK_MHZ >= 100) ? 24 : 23,   // ~6 Hz blink at 100 MHz, ~9 Hz at 150
     parameter STUB_LATENCY = 7996,        // = cnn_top latency (stub build only)
     parameter IMG_FILE     = "images.mem",
     parameter W_FILE       = "weights.mem",
@@ -43,7 +45,7 @@ module drowsiness_top #(
         assign locked  = 1'b1;
     end else begin : g_mmcm
         wire fb_unbuf, fb_buf, clk_unbuf;
-        // VCO = 100 MHz * 10 = 1000 MHz, CLKOUT0 = 1000 / (1000 / CLK_MHZ)
+        // 150 MHz: VCO = 100 MHz * 9 = 900 MHz, CLKOUT0 = 900 / 6; else VCO = 1000 MHz, CLKOUT0 = 1000 / (1000 / CLK_MHZ)
         MMCME2_BASE #(.CLKIN1_PERIOD(10.0), .DIVCLK_DIVIDE(1), .CLKFBOUT_MULT_F((CLK_MHZ == 150) ? 9.0 : 10.0),
                       .CLKOUT0_DIVIDE_F((CLK_MHZ == 150) ? 6.0 : 1000.0 / CLK_MHZ)) u_mmcm (
             .CLKIN1(clk), .CLKFBIN(fb_buf), .CLKFBOUT(fb_unbuf), .CLKFBOUTB(), .CLKOUT0(clk_unbuf),
@@ -117,10 +119,17 @@ module drowsiness_top #(
     localparam UPLOAD_SUPPORTED=1;
     wire prediction;                       // cnn_top: 1 = open, 0 = closed (tie -> closed)
 
-    cnn_top_150 #(.EXTERNAL_INPUT(1)) u_core (
-        .external_image(pc_mode && external_image),.external_addr(image_read_addr),.external_data(image_read_data),
-        .clk(sys_clk), .rst(rst), .start(cnn_start), .img_base_addr({img_slot, 10'b0}),
-        .done(cnn_done), .prediction(prediction), .logit0(logit0), .logit1(logit1));
+    generate if (CNN_150) begin : g_cnn150
+        cnn_top_150 #(.EXTERNAL_INPUT(1)) u_core (
+            .external_image(pc_mode && external_image),.external_addr(image_read_addr),.external_data(image_read_data),
+            .clk(sys_clk), .rst(rst), .start(cnn_start), .img_base_addr({img_slot, 10'b0}),
+            .done(cnn_done), .prediction(prediction), .logit0(logit0), .logit1(logit1));
+    end else begin : g_cnn100
+        cnn_top #(.EXTERNAL_INPUT(1)) u_core (
+            .external_image(pc_mode && external_image),.external_addr(image_read_addr),.external_data(image_read_data),
+            .clk(sys_clk), .rst(rst), .start(cnn_start), .img_base_addr({img_slot, 10'b0}),
+            .done(cnn_done), .prediction(prediction), .logit0(logit0), .logit1(logit1));
+    end endgenerate
 
     assign cnn_eye = ~prediction;          // eye_state 1 = closed
 `endif
