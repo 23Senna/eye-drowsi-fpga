@@ -16,6 +16,9 @@ module rom_weights (
     // Conv1 ROM
     input  [3:0]  conv1_w_addr,
     output reg signed [7:0] conv1_w0_data, conv1_w1_data, conv1_w2_data, conv1_w3_data,
+    // conv1 reads 3 taps (one kernel row) per clock: lane 1 = tap+1, lane 2 = tap+2
+    output reg signed [7:0] conv1_wL1_0_data, conv1_wL1_1_data, conv1_wL1_2_data, conv1_wL1_3_data,
+    output reg signed [7:0] conv1_wL2_0_data, conv1_wL2_1_data, conv1_wL2_2_data, conv1_wL2_3_data,
     input  [1:0]  conv1_b_addr,
     output reg signed [31:0] conv1_b_data,
 
@@ -23,12 +26,17 @@ module rom_weights (
     input  [5:0]  conv2_w_addr,
     output reg signed [7:0] conv2_w0_data, conv2_w1_data, conv2_w2_data, conv2_w3_data,
                             conv2_w4_data, conv2_w5_data, conv2_w6_data, conv2_w7_data,
+    // second input channel of the channel pair: same filter, tap + 9
+    output reg signed [7:0] conv2_wB0_data, conv2_wB1_data, conv2_wB2_data, conv2_wB3_data,
+                            conv2_wB4_data, conv2_wB5_data, conv2_wB6_data, conv2_wB7_data,
     input  [2:0]  conv2_b_addr,
     output reg signed [31:0] conv2_b_data,
 
     // FC ROM
     input  [6:0]  fc_w_addr,
-    output reg signed [7:0] fc_w0_data, fc_w1_data,
+    // fc_w{4*c+b}_data : class c, tap fc_w_addr + b   (fc_w_addr = 4*j)
+    output reg signed [7:0] fc_w0_data, fc_w1_data, fc_w2_data, fc_w3_data,
+                            fc_w4_data, fc_w5_data, fc_w6_data, fc_w7_data,
     input         fc_b_addr,
     output reg signed [31:0] fc_b_data,
 
@@ -65,6 +73,15 @@ module rom_weights (
         conv1_w2_data <= conv1_w[t1 + 9'd18];
         conv1_w3_data <= conv1_w[t1 + 9'd27];
 
+        conv1_wL1_0_data <= conv1_w[t1 + 9'd1];
+        conv1_wL1_1_data <= conv1_w[t1 + 9'd10];
+        conv1_wL1_2_data <= conv1_w[t1 + 9'd19];
+        conv1_wL1_3_data <= conv1_w[t1 + 9'd28];
+        conv1_wL2_0_data <= conv1_w[t1 + 9'd2];
+        conv1_wL2_1_data <= conv1_w[t1 + 9'd11];
+        conv1_wL2_2_data <= conv1_w[t1 + 9'd20];
+        conv1_wL2_3_data <= conv1_w[t1 + 9'd29];
+
         conv2_w0_data <= conv2_w[t2];
         conv2_w1_data <= conv2_w[t2 + 9'd36];
         conv2_w2_data <= conv2_w[t2 + 9'd72];
@@ -74,8 +91,23 @@ module rom_weights (
         conv2_w6_data <= conv2_w[t2 + 9'd216];
         conv2_w7_data <= conv2_w[t2 + 9'd252];
 
+        conv2_wB0_data <= conv2_w[t2 + 9'd9];
+        conv2_wB1_data <= conv2_w[t2 + 9'd45];
+        conv2_wB2_data <= conv2_w[t2 + 9'd81];
+        conv2_wB3_data <= conv2_w[t2 + 9'd117];
+        conv2_wB4_data <= conv2_w[t2 + 9'd153];
+        conv2_wB5_data <= conv2_w[t2 + 9'd189];
+        conv2_wB6_data <= conv2_w[t2 + 9'd225];
+        conv2_wB7_data <= conv2_w[t2 + 9'd261];
+
         fc_w0_data    <= fc_w[t3];
-        fc_w1_data    <= fc_w[t3 + 9'd128];
+        fc_w1_data    <= fc_w[t3 + 9'd1];
+        fc_w2_data    <= fc_w[t3 + 9'd2];
+        fc_w3_data    <= fc_w[t3 + 9'd3];
+        fc_w4_data    <= fc_w[t3 + 9'd128];
+        fc_w5_data    <= fc_w[t3 + 9'd129];
+        fc_w6_data    <= fc_w[t3 + 9'd130];
+        fc_w7_data    <= fc_w[t3 + 9'd131];
 
         conv1_b_data <= conv1_b[conv1_b_addr];
         conv2_b_data <= conv2_b[conv2_b_addr];
