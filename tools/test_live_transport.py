@@ -1,7 +1,7 @@
 import queue
 import time
 import unittest
-from live_transport import Mailbox, Transport
+from live_transport import Mailbox, Transport, clock
 
 
 class Port:
@@ -42,19 +42,19 @@ class LiveTests(unittest.TestCase):
         w.thread.start();self.assertTrue(w.ready.wait(1));w.enabled.set()
         try:
             for sequence in [10,11]:
-                w.mailbox.put(bytes(576),time.monotonic(),sequence)
-                deadline=time.monotonic()+1
-                while time.monotonic()<deadline:
+                w.mailbox.put(bytes(576),clock(),sequence)
+                deadline=clock()+1
+                while clock()<deadline:
                     e=events.get(timeout=1)
                     if e['event']=='result':break
                 self.assertEqual(e['capture_sequence'],sequence)
                 self.assertEqual(e['result']['frame_id'],490+sequence)
             time.sleep(0.04)
             self.assertEqual(len(p.writes),6)
-            w.mailbox.put(bytes(576),time.monotonic(),11)
+            w.mailbox.put(bytes(576),clock(),11)
             time.sleep(0.03)
             self.assertEqual(len(p.writes),6)
-            w.mailbox.put(bytes(576),time.monotonic(),12);w.pause()
+            w.mailbox.put(bytes(576),clock(),12);w.pause()
             self.assertIsNone(w.mailbox.item)
         finally:w.close()
         self.assertEqual(calls,[1]);self.assertTrue(p.closed)
@@ -62,21 +62,21 @@ class LiveTests(unittest.TestCase):
     def test_error_stops_without_retry(self):
         p=Port(fail=True);events=queue.Queue();w=Transport(lambda:p,events.put)
         w.thread.start();self.assertTrue(w.ready.wait(1));w.enabled.set()
-        w.mailbox.put(bytes(576),time.monotonic(),1)
+        w.mailbox.put(bytes(576),clock(),1)
         w.thread.join(1);w.close()
         self.assertEqual(w.error,'ERR MODE');self.assertEqual(len(p.writes),1)
 
     def test_exhausted_id_does_not_send(self):
         p=Port();w=Transport(lambda:p,lambda e:None,frame_id=65536)
         w.thread.start();self.assertTrue(w.ready.wait(1));w.enabled.set()
-        w.mailbox.put(bytes(576),time.monotonic(),1);w.thread.join(1);w.close()
+        w.mailbox.put(bytes(576),clock(),1);w.thread.join(1);w.close()
         self.assertIn('exhausted',w.error);self.assertEqual(p.writes,[])
 
     def test_golden_mismatch_stops_and_keeps_fpga_result(self):
         p=Port();events=queue.Queue()
         w=Transport(lambda:p,events.put,audit=lambda *a:{'golden_match':False})
         w.thread.start();self.assertTrue(w.ready.wait(1));w.enabled.set()
-        w.mailbox.put(bytes(576),time.monotonic(),1,'CLOSED')
+        w.mailbox.put(bytes(576),clock(),1,'CLOSED')
         w.thread.join(1);w.close()
         self.assertIn('disagree',w.error);self.assertEqual(len(p.writes),3)
         rows=[]

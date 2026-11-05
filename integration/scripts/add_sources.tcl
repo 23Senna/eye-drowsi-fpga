@@ -18,7 +18,7 @@ if {$USE_STUB} {
     set mems [glob [file join $fpga mem *.mem]]
     set_property verilog_define USE_STUB [current_fileset]
 } else {
-    foreach m {cnn_top rom_weights conv1_layer conv2_layer fc_layer mac_pipe relu_requant maxpool2x2} {
+    foreach m {cnn_top rom_weights conv1_layer conv2_layer fc_layer mac_pipe mac_pipe_lut mac_sel relu_requant maxpool2x2} {
         set f [file join $team rtl $m.v]
         if {![file exists $f]} { error "missing $f - clone the CNN team's repo next to fpga/ as eye-drowsi-fpga" }
         lappend srcs $f

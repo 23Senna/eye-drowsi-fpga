@@ -62,7 +62,7 @@ def main():
         if p.suffix=='.mem' or p.name=='params.txt':shutil.copyfile(p,mem/p.name)
     command('generate_units',[sys.executable,src/'sim/unit/gen_vectors.py'],unit)
     rtl=src/'rtl';ir=src/'integration/rtl';sim=src/'integration/sim'
-    cnn=[rtl/(m+'.v') for m in ['cnn_top','rom_weights','conv1_layer','conv2_layer','fc_layer','mac_pipe','relu_requant','maxpool2x2']]
+    cnn=[rtl/(m+'.v') for m in ['cnn_top','rom_weights','conv1_layer','conv2_layer','fc_layer','mac_pipe','mac_pipe_lut','mac_sel','relu_requant','maxpool2x2']]
     core=[ir/(m+'.v') for m in ['drowsiness_top','input_control','drowsy_fsm','alert_control','buzzer_control']]
     serial=[ir/(m+'.v') for m in ['uart_rx','uart_tx','uart_command','uart_ascii_tx','uart_monitor','uart_image_rx']] if not args.baseline else []
     stub=[ir/(m+'.v') for m in ['cnn_core_stub','image_rom','weight_bias_rom']]
@@ -77,9 +77,9 @@ def main():
         'tb_top':(sim/'tb_top.v',core+serial+stub,sim,['-DUSE_STUB']),
         'tb_top_real':(sim/'tb_top_real.v',core+serial+cnn,sim,[])}
     tests.update({
-        'tb_conv1_layer':(src/'sim/tb_conv1_layer.v',[rtl/(m+'.v') for m in ['conv1_layer','mac_pipe','relu_requant','maxpool2x2']],src/'ml/export',[]),
-        'tb_conv2_layer':(src/'sim/tb_conv2_layer.v',[rtl/(m+'.v') for m in ['conv2_layer','mac_pipe','relu_requant','maxpool2x2']],src/'ml/export',[]),
-        'tb_fc_layer':(src/'sim/tb_fc_layer.v',[rtl/'fc_layer.v',rtl/'mac_pipe.v'],src/'ml/export',[])})
+        'tb_conv1_layer':(src/'sim/tb_conv1_layer.v',[rtl/(m+'.v') for m in ['conv1_layer','mac_pipe','mac_pipe_lut','mac_sel','relu_requant','maxpool2x2']],src/'ml/export',[]),
+        'tb_conv2_layer':(src/'sim/tb_conv2_layer.v',[rtl/(m+'.v') for m in ['conv2_layer','mac_pipe','mac_pipe_lut','mac_sel','relu_requant','maxpool2x2']],src/'ml/export',[]),
+        'tb_fc_layer':(src/'sim/tb_fc_layer.v',[rtl/(m+'.v') for m in ['fc_layer','mac_pipe','mac_pipe_lut','mac_sel']],src/'ml/export',[])})
     if not args.baseline:
         tests.update({
             'tb_uart_phy':(sim/'tb_uart_phy.v',serial[:2],sim,[]),

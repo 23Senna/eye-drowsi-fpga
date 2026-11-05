@@ -62,7 +62,7 @@ A buzzer on Pmod JA1 sounds the DROWSY / MICROSLEEP alarm: see [buzzer](docs/BUZ
 
 ## Current results and demo
 
-The active real CNN takes 7,996 cycles = 79.96 us at 100 MHz (S1=10, S2=6).
+The active real CNN takes 702 cycles = 7.02 us at 100 MHz (since 3bf6c36, 5 Nov; 7,996 before) (S1=10, S2=6).
 The full UART/upload/buzzer build at 9dac154 uses 2,376 LUT / 2,230 FF /
 7.5 BRAM / 14 DSP; setup +0.948 ns and hold +0.067 ns. See the
 [build-qualified evidence](../docs/reports/current_build_20261104/README.md).

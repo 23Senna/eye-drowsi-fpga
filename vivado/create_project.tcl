@@ -15,6 +15,8 @@ add_files -norecurse [list \
   $root/rtl/conv2_layer.v \
   $root/rtl/fc_layer.v \
   $root/rtl/mac_pipe.v \
+  $root/rtl/mac_pipe_lut.v \
+  $root/rtl/mac_sel.v \
   $root/rtl/relu_requant.v \
   $root/rtl/maxpool2x2.v \
   $root/rtl/seven_seg_drive.v ]

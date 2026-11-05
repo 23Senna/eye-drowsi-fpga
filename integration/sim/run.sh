@@ -12,7 +12,7 @@ RTL=../rtl
 # CNN team's RTL (cnn_top.v, rom_weights.v): <repo>/rtl when this folder is <repo>/integration
 if [ -f ../../rtl/cnn_top.v ]; then TEAM_DEF=../../rtl; else TEAM_DEF=../../eye-drowsi-fpga/rtl; fi
 TEAM="${TEAM_RTL:-$TEAM_DEF}"
-TEAM_SRC=""; for m in cnn_top rom_weights conv1_layer conv2_layer fc_layer mac_pipe relu_requant maxpool2x2; do TEAM_SRC="$TEAM_SRC $TEAM/$m.v"; done
+TEAM_SRC=""; for m in cnn_top rom_weights conv1_layer conv2_layer fc_layer mac_pipe mac_pipe_lut mac_sel relu_requant maxpool2x2; do TEAM_SRC="$TEAM_SRC $TEAM/$m.v"; done
 mkdir -p build
 
 # generated files missing (fresh clone) -> generate them first
