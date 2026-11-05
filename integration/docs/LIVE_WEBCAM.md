@@ -82,6 +82,16 @@ the bit-exact integer CNN and DrowsyRef and models wire time (`--baud`) and the
 FTDI timer (`--usb-ms`, default 1). Its UART numbers are a model; camera and
 MediaPipe numbers are real.
 
+Dry run 5 Nov (laptop webcam, `--fps 10`, medians): camera read 24 ms, MediaPipe +
+crop 6 ms, wait for the paced UART slot 21 ms. 115200 / 16 ms: transaction 115 ms,
+capture-to-result 137 ms (p90 168), 8.4 inferences/s. 1 Mbaud / 1 ms: transaction
+12 ms, capture-to-result 32 ms (p90 42), 9.9 inferences/s.
+
+Crop domain: the 85 reyn crops of that run (eyes open) average 124 grey levels
+(per-image std 18.7) against 79.7 / 15.7 for ml/train.npz. The integer model
+called all 85 CLOSED; shifted to the training mean/std (`tools/check_crops.py`
+`match_train`) 64/85 were OPEN. Needs a preprocessing or retraining decision.
+
 ```powershell
 .\.venv-camera\Scripts\python.exe tools\live_webcam.py --camera 0 --eye left --fps 10 --dry-run
 ```
