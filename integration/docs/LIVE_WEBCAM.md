@@ -90,7 +90,16 @@ capture-to-result 137 ms (p90 168), 8.4 inferences/s. 1 Mbaud / 1 ms: transactio
 Crop domain: the 85 reyn crops of that run (eyes open) average 124 grey levels
 (per-image std 18.7) against 79.7 / 15.7 for ml/train.npz. The integer model
 called all 85 CLOSED; shifted to the training mean/std (`tools/check_crops.py`
-`match_train`) 64/85 were OPEN. Needs a preprocessing or retraining decision.
+`match_train`) 64/85 were OPEN.
+
+Fix (5 Nov): `--norm train` is now the default. After the reyn crop, each 24x24
+crop is shifted/scaled to the training mean 79.7 / std 15.7 (`check_crops.match_train`)
+and those exact bytes are shown, uploaded and audited; `--norm none` restores the
+old behaviour. The Windows GUI picks this up automatically through the default.
+30 s dry run (open, ~5 s closed, open): 290 results, all golden matches; closures
+gave runs of 23-24 CLOSED -> MICROSLEEP, then DROWSY -> AWAKE; a few 1-6 frame
+CLOSED runs remain while open (partly blinks). Retraining on webcam crops would
+still help; this is the no-retrain fix for the demo.
 
 ```powershell
 .\.venv-camera\Scripts\python.exe tools\live_webcam.py --camera 0 --eye left --fps 10 --dry-run

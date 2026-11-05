@@ -17,6 +17,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', help='FPGA COM port; required unless --preview-only or --dry-run')
     parser.add_argument('--baud',type=int,default=None,help='UART baud; must match the bitstream (default uart_cli.DEFAULT_BAUD = 1000000)')
+    parser.add_argument('--norm',choices=['train','none'],default='train',
+        help='train (default): shift/scale each 24x24 crop to the training-set mean 79.7 / std 15.7 before upload '
+             '(webcam crops average ~124 and were all classified CLOSED); none: send the crop unchanged')
     parser.add_argument('--dry-run',action='store_true',help='No board: tools/fake_fpga.py (integer CNN + DrowsyRef, modelled wire/USB time)')
     parser.add_argument('--usb-ms',type=float,default=1.0,help='--dry-run only: modelled FTDI latency timer per reply (Windows default 16)')
     parser.add_argument('--camera',type=int,default=0)
@@ -52,6 +55,7 @@ def main(argv=None):
             raise RuntimeError('MediaPipe legacy FaceMesh missing; install requirements-live.txt with Python 3.12')
         sys.path.insert(0,str(ROOT))
         from eye_capture import crop_eye, LEFT_EYE, RIGHT_EYE, BLACK_LEVEL, WHITE_LEVEL
+        from check_crops import match_train, TRAIN_MEAN, TRAIN_STD
         if args.check:
             print(f'Python {sys.version.split()[0]}, OpenCV {cv2.__version__}, MediaPipe {mp.__version__}, pySerial {serial.VERSION}')
             return 0
@@ -63,6 +67,7 @@ def main(argv=None):
     crop_description=(f'reyn eye+brow | pad {args.pad:.2f} | contrast {BLACK_LEVEL}..{WHITE_LEVEL}'
                       if args.roi_style=='reyn' else f'{args.roi_style} | {1 + args.pad:.2f}x eye width')
     crop_description+=f' | Y {args.crop_offset_y:+.2f}'
+    if args.norm=='train':crop_description+=f' | norm mean {TRAIN_MEAN} std {TRAIN_STD}'
     print(f'Eye crop: {crop_description} | output 24x24 grayscale',flush=True)
     events=queue.SimpleQueue()
     worker=None
@@ -105,6 +110,7 @@ def main(argv=None):
                 'target_fps':args.fps,'port':args.port,'baud':args.baud,'dry_run':args.dry_run,'preview_only':args.preview_only,
                 'diagnostics':args.diagnostics,'pad':args.pad,'roi_style':args.roi_style,
                 'crop_offset_y':args.crop_offset_y,
+                'norm':args.norm,'norm_target':[TRAIN_MEAN,TRAIN_STD] if args.norm=='train' else None,
                 'contrast_levels':[BLACK_LEVEL,WHITE_LEVEL] if args.roi_style=='reyn' else None,
                 'preprocessing':'MediaPipe landmarks + OpenCV grayscale/INTER_AREA 24x24',
                 'note':'Diagnostics saves uploaded eye crops only; board history is observation-count based'})
@@ -150,6 +156,8 @@ def main(argv=None):
             if face.multi_face_landmarks:
                 crop,box=crop_eye(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY),
                     face.multi_face_landmarks[0].landmark,LEFT_EYE if args.eye=='left' else RIGHT_EYE,w,h,pad=args.pad,style=args.roi_style,offset_y=args.crop_offset_y)
+                if crop is not None and args.norm=='train':
+                    crop=match_train(crop)  # the exact bytes uploaded, shown and audited
                 if crop is not None:
                     stage['crop'].append((clock()-captured)*1000)
                     last_crop=captured
@@ -207,7 +215,7 @@ def main(argv=None):
             if args.diagnostics:
                 cv2.putText(frame,f'{golden_status} | label: {label or "UNLABELED"} | O=open C=closed U=clear',
                             (12,110),cv2.FONT_HERSHEY_SIMPLEX,0.45,(0,255,255),1)
-            cv2.putText(frame,f'Crop: {args.roi_style} | pad {args.pad:.2f} | Y {args.crop_offset_y:+.2f} -> 24x24',
+            cv2.putText(frame,f'Crop: {args.roi_style} | pad {args.pad:.2f} | Y {args.crop_offset_y:+.2f} | norm {args.norm} -> 24x24',
                         (12,h-42),cv2.FONT_HERSHEY_SIMPLEX,0.45,(0,255,255),1)
             cv2.putText(frame,'LIVE' if running else status,(12,h-18),cv2.FONT_HERSHEY_SIMPLEX,0.45,(0,255,255),1)
             cv2.imshow(window,frame)
